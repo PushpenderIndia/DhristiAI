@@ -2,6 +2,12 @@
 
 ## 🧠 Project Brief: *AI-Powered Real-Time Crowd Risk Monitoring System*
 
+## YouTube Demonstration
+
+- Click on this below image for playing video
+
+[![IMAGE_ALT](https://img.youtube.com/vi/AlFcAmmxvOk/0.jpg)](https://youtu.be/AlFcAmmxvOk)
+
 ### 🚧 Problem Statement:
 
 Large public gatherings often lack real-time crowd density analysis and proactive risk management, leading to **stampedes, chaos, injuries, and even loss of lives**.
@@ -43,7 +49,6 @@ A smart surveillance system that:
 * It **detects danger before it becomes disaster**.
 * It empowers ground staff with **instant recommendations**, not just static alerts.
 * It bridges the gap between **human limitation and machine vision**.
-
 
 ## Architecture Diagram
 
