@@ -171,3 +171,29 @@ AI that doesn’t just see — it thinks, guides, and protects.
 Our USP lies in the fusion of real-time vision + intelligent recommendations. We’re not just analyzing the crowd, we’re guiding what to do next — using state-of-the-art models deployed on Vertex AI, live maps via D3.js, and even detecting missing persons using facial recognition. Add to that a beautiful, intuitive admin dashboard and live RTSP integration, and you get a powerful tool ready for deployment in public events, stadiums, stations, or smart cities.
 
 ---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Hackathon Teammate
+<table>
+<tr>
+
+<td align="center">
+    <a href="https://github.com/khusburai28">
+        <kbd><img src="https://avatars3.githubusercontent.com/khusburai28?size=400" width="100px;" alt=""/></kbd><br />
+        <sub><b>Khusbu Rai</b></sub>
+    </a><br />
+</td>
+
+<td align="center">
+    <a href="https://github.com/PushpenderIndia">
+        <kbd><img src="https://avatars3.githubusercontent.com/PushpenderIndia?size=400" width="100px;" alt=""/></kbd><br />
+        <sub><b>Pushpender Singh</b></sub>
+    </a><br />
+</td>
+
+</tr>
+</tr>
+</table>
