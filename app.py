@@ -103,12 +103,13 @@ def predict():
         )
         
         # Log the result structure for debugging
-        print(f"Prediction result received: {type(result)}")
+        print(f"Prediction result received: {result}")
         
         # Check if the response includes a video path
-        if isinstance(result, tuple) and len(result) >= 2:
+        if isinstance(result, tuple) and len(result) >= 3:
             video_dict = result[0]
             plot_dict = result[1]
+            realtime_metrics_list = result[2] 
             
             # Convert relative paths to absolute URLs if needed
             if isinstance(video_dict, dict) and 'video' in video_dict:
@@ -124,6 +125,18 @@ def predict():
                         import shutil
                         shutil.copy(video_path, target_path)
                         video_dict['video'] = video_url_path
+            
+            # Process metrics data if needed
+            if realtime_metrics_list:
+                print(f"Received metrics data with {len(realtime_metrics_list)} data points")
+                
+                # Generate summary statistics
+                if len(realtime_metrics_list) > 0:
+                    avg_people = sum(item['average_people'] for item in realtime_metrics_list) / len(realtime_metrics_list)
+                    max_people = max(item['average_people'] for item in realtime_metrics_list)
+                    
+                    print(f"Average people count: {avg_people}")
+                    print(f"Maximum people count: {max_people}")
         
         # Return the raw prediction results
         return jsonify({

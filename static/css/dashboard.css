@@ -702,3 +702,78 @@ button[disabled] {
 .video-feed .video-controls button:last-child {
     margin-right: 0;
 } 
+
+/* Real-time Status Indicator */
+.real-time-status {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.4);
+    margin-right: 15px;
+    transition: all 0.3s ease;
+}
+
+.real-time-status.live {
+    background: rgba(220, 53, 69, 0.25);
+    color: #ff5252;
+}
+
+.real-time-status.paused {
+    background: rgba(108, 117, 125, 0.25);
+    color: #adb5bd;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #adb5bd;
+    margin-right: 8px;
+    display: inline-block;
+}
+
+.status-dot.live {
+    background: #ff5252;
+    animation: pulse 2s infinite;
+}
+
+/* Current time marker in chart */
+.current-time-marker {
+    transition: all 0.2s ease-out;
+}
+
+/* Pulse animation for changing values */
+.stats-value {
+    transition: all 0.3s ease;
+}
+
+.stats-value.pulse {
+    animation: pulse-text 0.5s;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(255, 82, 82, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+    }
+}
+
+@keyframes pulse-text {
+    0% {
+        color: #fff;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+    100% {
+        color: inherit;
+        text-shadow: none;
+    }
+} 
