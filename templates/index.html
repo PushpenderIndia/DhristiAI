@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DhristiAI - AI-Powered Crowd Monitoring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background">
+        <div class="gradient-bg"></div>
+        <div class="shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <header class="glass-nav">
+        <div class="container">
+            <div class="logo">
+                <h1>Drishti<span>AI</span></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Home</a></li>
+                    <li><a href="#problem">Problem</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="{{ url_for('dashboard') }}" class="btn-dashboard">Dashboard</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container glass-card hero-content">
+            <div class="hero-text">
+                <h1 class="animate-text">Drishti<span>AI</span></h1>
+                <p class="animate-text-delay">AI-Powered Real-Time Crowd Risk Monitoring System</p>
+                <div class="hero-btns animate-text-delay-2">
+                    <a href="#problem" class="btn-primary">Learn More</a>
+                    <a href="{{ url_for('dashboard') }}" class="btn-secondary">Try Demo</a>
+                </div>
+            </div>
+            <div class="hero-image animate-fade-in">
+                <!-- Check if image exists, otherwise use placeholder -->
+                <div class="crowd-monitoring-placeholder placeholder-img">
+                    <div>
+                        <i class="fas fa-users fa-3x"></i>
+                        <p>Real-time crowd density monitoring with AI</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="problem" class="problem">
+        <div class="container">
+            <h2 class="section-title">The <span>Problem</span></h2>
+            <div class="glass-card problem-card">
+                <div class="problem-content">
+                    <div class="problem-text">
+                        <h3>Large public gatherings often lack real-time crowd monitoring</h3>
+                        <p>This leads to <strong>stampedes, chaos, injuries, and even loss of lives</strong>.</p>
+                        <ul class="stats">
+                            <li>
+                                <i class="fas fa-skull"></i>
+                                <span>7,000+</span>
+                                <p>Deaths from crowd crushes globally in the last two decades</p>
+                            </li>
+                            <li>
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>1,100+</span>
+                                <p>Deaths due to stampedes in India since 2000</p>
+                            </li>
+                            <li>
+                                <i class="fas fa-chart-line"></i>
+                                <span>Most incidents</span>
+                                <p>Happen due to lack of real-time monitoring</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="problem-image">
+                        <!-- Check if image exists, otherwise use placeholder -->
+                        {% if url_for('static', filename='images/crowd-density.jpeg') %}
+                            <img src="{{ url_for('static', filename='images/crowd-density.jpeg') }}" alt="Crowd Density">
+                        {% else %}
+                            <div class="placeholder-img">
+                                <div>
+                                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                                    <p>Crowd density issues in public gatherings</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Our <span>Features</span></h2>
+            <div class="features-grid">
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h3>Real-time Detection</h3>
+                    <p>Detect crowd density per square meter in real-time from RTSP video feeds</p>
+                </div>
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>Risk Classification</h3>
+                    <p>Classify areas into Low, Medium, High risk zones using deep learning</p>
+                </div>
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <h3>Crowd Heatmaps</h3>
+                    <p>Visualize crowd hotspots via live heatmaps on an interactive map</p>
+                </div>
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3>Missing Person Detection</h3>
+                    <p>Identify missing persons using facial recognition with FaceNet + DeepFace</p>
+                </div>
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI-Driven Instructions</h3>
+                    <p>Generate crowd control instructions using Google Gemini</p>
+                </div>
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>Advanced Analytics</h3>
+                    <p>Powered by Flask, MongoDB, D3.js, and Google Vertex AI</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <div class="glass-card cta-card">
+                <h2>Ready to enhance crowd safety?</h2>
+                <p>Try our AI-powered solution today and prevent potential crowd disasters.</p>
+                <a href="{{ url_for('dashboard') }}" class="btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>Drishti<span>AI</span></h2>
+                    <p>AI-Powered Crowd Risk Monitoring</p>
+                </div>
+                <div class="footer-links">
+                    <ul>
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#problem">Problem</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 DhristiAI. Made with <i class="fas fa-heart"></i> by Pushpender Singh & Khusbu Rai</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
