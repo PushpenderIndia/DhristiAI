@@ -279,11 +279,96 @@ document.addEventListener('DOMContentLoaded', function() {
             maxWorkersSlider.addEventListener('input', updateSliderValue);
         }
 
+        // Add demo video selection
+        createDemoVideoSelector();
+
         // Initialize sidebar navigation
         initSidebarNavigation();
         
         // Handle window resize
         window.addEventListener('resize', handleResize);
+    }
+    
+    // Create a demo video selector for testing
+    function createDemoVideoSelector() {
+        // Create demo video selector
+        const videoControls = document.querySelector('.video-controls');
+        
+        if (videoControls) {
+            // Create a dropdown for demo videos
+            const demoSelector = document.createElement('div');
+            demoSelector.className = 'form-group demo-selector';
+            demoSelector.innerHTML = `
+                <button class="btn-secondary btn-sm" id="use-demo">
+                    <i class="fas fa-film"></i> Use Demo Video
+                </button>
+                <div class="demo-dropdown" style="display: none;">
+                    <div class="demo-option" data-video="DemoVideos/Crowd_Low_Density.mp4">Low Density Crowd</div>
+                    <div class="demo-option" data-video="DemoVideos/FreeFlow_Crowd.mp4">Free Flow Crowd</div>
+                    <div class="demo-option" data-video="DemoVideos/High_Crowd.mp4">High Density Crowd</div>
+                </div>
+            `;
+            
+            videoControls.appendChild(demoSelector);
+            
+            // Add event listeners for demo selector
+            const useDemoBtn = document.getElementById('use-demo');
+            const demoDropdown = document.querySelector('.demo-dropdown');
+            const demoOptions = document.querySelectorAll('.demo-option');
+            
+            // Toggle dropdown
+            useDemoBtn.addEventListener('click', function() {
+                demoDropdown.style.display = demoDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Handle option selection
+            demoOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const videoPath = this.getAttribute('data-video');
+                    loadDemoVideo(videoPath, this.textContent);
+                    demoDropdown.style.display = 'none';
+                });
+            });
+            
+            // Close dropdown when clicking elsewhere
+            document.addEventListener('click', function(e) {
+                if (!demoSelector.contains(e.target)) {
+                    demoDropdown.style.display = 'none';
+                }
+            });
+        }
+    }
+    
+    // Load a demo video from the path
+    function loadDemoVideo(videoPath, videoName) {
+        // Clear placeholder
+        videoPlaceholder.innerHTML = '';
+        
+        // Create video element
+        videoElement = document.createElement('video');
+        videoElement.controls = true;
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        videoElement.style.borderRadius = '8px';
+        
+        // Set video source
+        videoElement.src = videoPath;
+        
+        // Add to placeholder
+        videoPlaceholder.appendChild(videoElement);
+        
+        // Update status
+        console.log('Demo video loaded:', videoName);
+        
+        // Enable analyze button
+        analyzeVideoBtn.disabled = false;
+        
+        // Create a special flag to indicate this is a demo video
+        uploadedVideo = {
+            isDemo: true,
+            path: videoPath,
+            name: videoName
+        };
     }
     
     // Handle window resize
@@ -399,14 +484,48 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show AI loading spinner
         aiLoading.style.display = 'flex';
         
-        // Create a temporary URL for the uploaded video file
-        const videoUrl = URL.createObjectURL(uploadedVideo);
+        // Check if this is a demo video
+        if (uploadedVideo.isDemo) {
+            // For demo videos, we can directly use the path without uploading
+            fetch('/api/predict', {
+                method: 'POST',
+                body: JSON.stringify({
+                    video_url: uploadedVideo.path,
+                    skip: frameSkip,
+                    max_workers: maxWorkers
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    displayAnalysisResults(data.data);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during analysis: ' + error.message);
+            })
+            .finally(() => {
+                // Reset processing state
+                isProcessing = false;
+                analyzeVideoBtn.disabled = false;
+                analyzeVideoBtn.innerHTML = '<i class="fas fa-search"></i> Analyze';
+                // Hide loading spinner
+                aiLoading.style.display = 'none';
+            });
+            return;
+        }
         
-        // Create FormData to send the file
+        // For user-uploaded videos, we need to upload them first
         const formData = new FormData();
         formData.append('video', uploadedVideo);
         
-        // Send the video file to the server first to store it temporarily
+        // First, upload the video to our server
         fetch('/api/upload_video', {
             method: 'POST',
             body: formData
@@ -414,7 +533,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(uploadData => {
             if (uploadData.status === 'success') {
-                // Now make the predict API call with the file path or URL
+                console.log('Video uploaded successfully:', uploadData);
+                
+                // Now make the predict API call with the file path
                 return fetch('/api/predict', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -456,51 +577,178 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayAnalysisResults(results) {
         console.log('Analysis results received:', results);
         
-        // Convert gradio results to our format if needed
+        // Check if the results are in the Gradio API format
         if (Array.isArray(results) && results.length >= 2) {
-            // If results is directly from gradio (raw response)
-            results = {
-                // First element might be processed video or status
-                chart: {
-                    // Second element might be chart data
-                    data: convertToChartData(results[1])
-                },
-                heatmap: {
-                    // Any heatmap data
-                },
-                recommendations: [
-                    "Analysis complete. Results shown in the chart.",
-                    `Frame skip: ${frameSkipSlider.value}, Max workers: ${maxWorkersSlider.value}`,
-                    "Adjust parameters for different analysis results."
-                ]
-            };
-        }
-        
-        // Update the chart with real data
-        if (results.chart) {
-            updateChart(results.chart);
-        }
-        
-        // Update heatmap
-        if (results.heatmap) {
-            updateHeatmap(results.heatmap);
-        }
-        
-        // Display AI recommendations
-        if (results.recommendations && Array.isArray(results.recommendations)) {
-            displayAIRecommendations(results.recommendations);
+            // Get video and plot from Gradio response
+            const videoResult = results[0];
+            const plotResult = results[1];
+            
+            // Display annotated video if available
+            if (videoResult && videoResult.video) {
+                displayAnnotatedVideo(videoResult.video);
+            }
+            
+            // Display plot if available
+            if (plotResult && plotResult.type === 'matplotlib' && plotResult.plot) {
+                displayPlot(plotResult.plot);
+            }
+            
+            // Generate simple recommendations based on analysis
+            const recommendations = [
+                "Analysis complete. See annotated video and crowd density plot.",
+                `Frame skip: ${frameSkipSlider.value}, Max workers: ${maxWorkersSlider.value}`,
+                "Adjust parameters for different analysis results."
+            ];
+            
+            displayAIRecommendations(recommendations);
+            
+            // Update stats cards with some placeholder values
+            updateStatsFromAnnotation();
         } else {
-            // If no recommendations available, display default message
-            displayAIRecommendations(["No specific recommendations available for this analysis."]);
+            // Handle older format or custom format
+            if (results.chart) {
+                updateChart(results.chart);
+            }
+            
+            if (results.heatmap) {
+                updateHeatmap(results.heatmap);
+            }
+            
+            if (results.recommendations && Array.isArray(results.recommendations)) {
+                displayAIRecommendations(results.recommendations);
+            } else {
+                displayAIRecommendations(["No specific recommendations available for this analysis."]);
+            }
+            
+            updateStatsFromResults(results);
         }
+    }
+    
+    // Display annotated video from API response
+    function displayAnnotatedVideo(videoUrl) {
+        // Get video feed container
+        const videoFeed = document.querySelector('.video-feed');
+        if (!videoFeed) return;
         
-        // Update stats cards if data available
-        updateStatsFromResults(results);
+        // Clear existing content
+        videoFeed.innerHTML = '';
+        
+        // Create video element for the annotated video
+        const annotatedVideo = document.createElement('video');
+        annotatedVideo.controls = true;
+        annotatedVideo.autoplay = false;
+        annotatedVideo.style.width = '100%';
+        annotatedVideo.style.height = 'auto';
+        annotatedVideo.style.borderRadius = '8px';
+        annotatedVideo.style.maxHeight = '300px';
+        
+        // Set source
+        annotatedVideo.src = videoUrl;
+        
+        // Create container for the video
+        const videoContainer = document.createElement('div');
+        videoContainer.className = 'annotated-video-container';
+        videoContainer.appendChild(annotatedVideo);
+        
+        // Add to video feed
+        videoFeed.appendChild(videoContainer);
+        
+        // Add controls below the video
+        const videoControls = document.createElement('div');
+        videoControls.className = 'video-controls';
+        videoControls.innerHTML = `
+            <button class="btn-secondary btn-sm" id="download-video"><i class="fas fa-download"></i> Download Annotated Video</button>
+            <button class="btn-primary btn-sm" id="analyze-again"><i class="fas fa-redo"></i> Analyze Again</button>
+        `;
+        videoFeed.appendChild(videoControls);
+        
+        // Add download event
+        document.getElementById('download-video').addEventListener('click', () => {
+            window.open(videoUrl, '_blank');
+        });
+        
+        // Add analyze again event
+        document.getElementById('analyze-again').addEventListener('click', () => {
+            if (uploadedVideo) {
+                analyzeVideo();
+            } else {
+                alert('Please upload a video first');
+            }
+        });
+    }
+    
+    // Display plot from API response
+    function displayPlot(plotData) {
+        // Get chart container
+        const chartContainer = document.getElementById('density-chart');
+        if (!chartContainer) return;
+        
+        // Clear existing content
+        chartContainer.innerHTML = '';
+        
+        // Create image element for the plot
+        const plotImage = document.createElement('img');
+        plotImage.src = plotData; // This should be the base64 data URL
+        plotImage.alt = 'Crowd Density Analysis Plot';
+        plotImage.style.width = '100%';
+        plotImage.style.height = 'auto';
+        plotImage.style.borderRadius = '8px';
+        
+        // Add to chart container
+        chartContainer.appendChild(plotImage);
+    }
+    
+    // Update stats based on the annotation
+    function updateStatsFromAnnotation() {
+        try {
+            // Example of updating stats with estimation
+            const statsCards = document.querySelectorAll('.stats-card .stats-value');
+            
+            // Current crowd - random number for demonstration
+            if (statsCards[0]) {
+                const crowd = Math.round(800 + Math.random() * 1000);
+                statsCards[0].textContent = crowd.toLocaleString();
+            }
+            
+            // Risk level based on the crowd number
+            if (statsCards[1]) {
+                const crowd = parseInt(statsCards[0].textContent.replace(/,/g, ''));
+                let riskLevel = 'Low';
+                if (crowd > 1500) riskLevel = 'High';
+                else if (crowd > 1000) riskLevel = 'Medium';
+                
+                statsCards[1].textContent = riskLevel;
+                
+                // Update risk color
+                const riskIcon = statsCards[1].closest('.stats-card').querySelector('.stats-icon');
+                if (riskIcon) {
+                    riskIcon.className = 'stats-icon';
+                    if (riskLevel === 'Low') riskIcon.classList.add('green');
+                    else if (riskLevel === 'Medium') riskIcon.classList.add('yellow');
+                    else riskIcon.classList.add('red');
+                }
+            }
+            
+            // Active cameras
+            if (statsCards[2]) {
+                statsCards[2].textContent = '1'; // Since we're analyzing one video
+            }
+        } catch (e) {
+            console.error('Error updating stats:', e);
+        }
     }
     
     // Convert Gradio response to chart data format
     function convertToChartData(data) {
         // Handle different possible formats of the data
+        console.log("Converting data format:", data);
+        
+        // If data is empty or undefined, return empty array
+        if (!data) {
+            return [];
+        }
+        
+        // Handle string data (try to parse as JSON)
         if (typeof data === 'string') {
             try {
                 data = JSON.parse(data);
@@ -510,9 +758,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // If data is already in our format
-        if (Array.isArray(data) && data.length && data[0].hasOwnProperty('density')) {
+        // If data is already an array of objects with density property
+        if (Array.isArray(data) && data.length && typeof data[0] === 'object' && data[0].hasOwnProperty('density')) {
             return data;
+        }
+        
+        // If data is an array but doesn't have the right format, try to convert
+        if (Array.isArray(data) && data.length) {
+            try {
+                // Try to convert each item to our format
+                return data.map((item, index) => {
+                    // If item is already in correct format
+                    if (item && typeof item === 'object' && item.hasOwnProperty('density')) {
+                        return item;
+                    }
+                    
+                    // Try to extract density value
+                    let density = 0;
+                    if (typeof item === 'number') {
+                        density = item;
+                    } else if (typeof item === 'object') {
+                        // Try to find a numeric property
+                        for (const key in item) {
+                            if (typeof item[key] === 'number') {
+                                density = item[key];
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Determine risk level based on density
+                    let risk = 'low';
+                    if (density > 0.7) {
+                        risk = 'high';
+                    } else if (density > 0.4) {
+                        risk = 'medium';
+                    }
+                    
+                    return {
+                        time: index * 10,
+                        density: density,
+                        risk: risk
+                    };
+                });
+            } catch (e) {
+                console.error('Failed to convert chart data array:', e);
+            }
         }
         
         // Default mock data if we can't convert

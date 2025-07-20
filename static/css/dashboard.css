@@ -615,3 +615,90 @@ button[disabled] {
         justify-content: center;
     }
 } 
+
+/* Demo Video Selector Styles */
+.demo-selector {
+    margin-left: 10px;
+    position: relative;
+}
+
+.demo-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: rgba(26, 27, 35, 0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 200px;
+    margin-top: 8px;
+}
+
+.demo-option {
+    padding: 10px 15px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.demo-option:hover {
+    background: rgba(108, 99, 255, 0.2);
+}
+
+.demo-option:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.demo-option:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.video-controls {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+} 
+
+/* Annotated Video Container */
+.annotated-video-container {
+    width: 100%;
+    position: relative;
+    margin-bottom: 15px;
+    background: rgba(26, 27, 35, 0.4);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.annotated-video-container video {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Plot Image */
+#density-chart img {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Video controls for annotated video */
+.video-feed .video-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.video-feed .video-controls button {
+    flex: 1;
+    margin: 0 5px;
+}
+
+.video-feed .video-controls button:first-child {
+    margin-left: 0;
+}
+
+.video-feed .video-controls button:last-child {
+    margin-right: 0;
+} 

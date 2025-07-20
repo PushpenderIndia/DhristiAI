@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, jsonify, url_for
 import os
 from dotenv import load_dotenv
-from gradio_client import Client
+from gradio_client import Client, handle_file
 import json
 import requests
 from werkzeug.utils import secure_filename
 import uuid
+import tempfile
+import time
 
 # Load environment variables
 load_dotenv()
@@ -66,6 +68,8 @@ def upload_video():
         })
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -87,24 +91,44 @@ def predict():
         
         print(f"Processing video: {video_url} with skip={skip}, max_workers={max_workers}")
         
-        # Initialize Gradio client with the AI server URL
+        # Initialize Gradio client
         client = Client(AI_SERVER_URL)
         
-        # Make prediction with positional arguments instead of keyword arguments
-        # The Gradio API expects inputs as positional arguments
+        # Use handle_file for local file processing
         result = client.predict(
-            {"video": video_url},  # First parameter is the video
-            skip,                  # Second parameter is skip
-            max_workers,           # Third parameter is max_workers
+            {"video": handle_file(video_url)},  # Use handle_file for local files
+            skip,
+            max_workers,
             api_name="/predict"
         )
         
-        print(f"Prediction result received: {result}")
+        # Log the result structure for debugging
+        print(f"Prediction result received: {type(result)}")
         
-        # Return the raw prediction results to let frontend handle formatting
+        # Check if the response includes a video path
+        if isinstance(result, tuple) and len(result) >= 2:
+            video_dict = result[0]
+            plot_dict = result[1]
+            
+            # Convert relative paths to absolute URLs if needed
+            if isinstance(video_dict, dict) and 'video' in video_dict:
+                video_path = video_dict['video']
+                if video_path.startswith('/'):
+                    # This is a local path - serve it as a static file
+                    video_url_path = f"/static/processed/{os.path.basename(video_path)}"
+                    os.makedirs(os.path.dirname(os.path.join('static', 'processed')), exist_ok=True)
+                    
+                    # Copy the file to our static directory if it exists
+                    if os.path.exists(video_path):
+                        target_path = os.path.join('static', 'processed', os.path.basename(video_path))
+                        import shutil
+                        shutil.copy(video_path, target_path)
+                        video_dict['video'] = video_url_path
+        
+        # Return the raw prediction results
         return jsonify({
             'status': 'success',
-            'data': result  # Raw result from Gradio API
+            'data': result
         })
         
     except Exception as e:
