@@ -777,3 +777,217 @@ button[disabled] {
         text-shadow: none;
     }
 } 
+
+/* Camera Management */
+.camera-management-container {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.camera-management-container h4 {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.camera-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.camera-form input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary);
+}
+
+.description i {
+    color: var(--primary);
+    margin-right: 0.5rem;
+}
+
+.camera-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--glass-border);
+}
+
+.camera-title {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.camera-actions {
+    display: flex;
+    justify-content: space-between;
+}
+
+.camera-actions button {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.no-cameras-message {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+/* Live Feed Page */
+.live-feeds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.feed-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.feed-video {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.feed-info {
+    padding: 1rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.feed-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.feed-status {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--green);
+}
+
+.feed-status.offline {
+    background: rgba(255, 82, 82, 0.15);
+    color: var(--red);
+}
+
+.feed-actions {
+    display: flex;
+    gap: 0.5rem;
+} 
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    width: 400px;
+    max-width: 90%;
+    overflow: hidden;
+    animation: modal-appear 0.3s ease forwards;
+}
+
+@keyframes modal-appear {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+    color: var(--red);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body .camera-url {
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    word-break: break-all;
+    margin-top: 0.5rem;
+    font-family: monospace;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    border-top: 1px solid var(--glass-border);
+} 

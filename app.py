@@ -33,6 +33,11 @@ def dashboard():
     return render_template('dashboard.html', 
                           ai_server_url=AI_SERVER_URL)
 
+@app.route('/live_feed')
+def live_feed():
+    return render_template('live_feed.html',
+                          ai_server_url=AI_SERVER_URL)
+
 @app.route('/api/upload_video', methods=['POST'])
 def upload_video():
     try:

@@ -31,6 +31,9 @@
                         <a href="#live-feeds-section"><i class="fas fa-video"></i> <span>Live Feeds</span></a>
                     </li>
                     <li>
+                        <a href="/live_feed" id="camera-management-link"><i class="fas fa-camera"></i> <span>Camera Management</span></a>
+                    </li>
+                    <li>
                         <a href="#heatmap-section"><i class="fas fa-map-marked-alt"></i> <span>Heatmap</span></a>
                     </li>
                     <li>
@@ -44,6 +47,8 @@
                     </li>
                 </ul>
             </nav>
+            
+
             
             <div class="sidebar-footer">
                 <a href="{{ url_for('index') }}" class="btn-secondary"><i class="fas fa-home"></i> <span>Back to Home</span></a>
@@ -74,7 +79,7 @@
                     </div>
                     <div class="stats-info">
                         <h3>Current Crowd</h3>
-                        <p class="stats-value">1,245</p>
+                        <p class="stats-value">-</p>
                     </div>
                 </div>
                 
@@ -84,7 +89,7 @@
                     </div>
                     <div class="stats-info">
                         <h3>Risk Level</h3>
-                        <p class="stats-value">Medium</p>
+                        <p class="stats-value">-</p>
                     </div>
                 </div>
                 
@@ -94,7 +99,7 @@
                     </div>
                     <div class="stats-info">
                         <h3>Active Cameras</h3>
-                        <p class="stats-value">8</p>
+                        <p class="stats-value" id="active-cameras-count">0</p>
                     </div>
                 </div>
                 
@@ -229,5 +234,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/camera-management-link.js') }}"></script>
 </body>
 </html> 

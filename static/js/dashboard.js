@@ -14,21 +14,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
     const sidebar = document.querySelector('.sidebar');
     const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+    const activeCamerasCountEl = document.getElementById('active-cameras-count');
     
     // Get AI server URL from hidden input
-    const aiServerUrl = document.getElementById('ai-server-url').value;
+    const aiServerUrl = document.getElementById('ai-server-url')?.value;
     
     // Global variables
     let uploadedVideo = null;
     let videoElement = null;
     let chart = null;
     let isProcessing = false;
+    let currentCamera = null;
     
     // Initialize tooltips, popovers, etc. (if needed)
     initDashboard();
     
     // Initialize event listeners
     initEventListeners();
+    
+    // Initialize camera management
+    initCameraManagement();
     
     // Dashboard initialization
     function initDashboard() {
@@ -41,6 +46,166 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Update range value displays
         updateRangeValueDisplays();
+        
+        // Check URL parameters for camera
+        checkUrlForCamera();
+    }
+    
+    // Check URL for camera parameter
+    function checkUrlForCamera() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cameraId = urlParams.get('camera');
+        
+        if (cameraId) {
+            // Load camera feed
+            loadCameraFeed(cameraId);
+        }
+    }
+    
+    // Load camera feed
+    function loadCameraFeed(cameraId) {
+        // Get cameras from local storage
+        const cameras = getCameras();
+        currentCamera = cameras.find(camera => camera.id === cameraId);
+        
+        if (currentCamera) {
+            // Update header title
+            const headerTitle = document.querySelector('.header-title h1');
+            if (headerTitle) {
+                headerTitle.innerHTML = `Camera Monitor: <span style="color: var(--primary);">${currentCamera.id.substring(0, 6)}...</span>`;
+            }
+            
+            const headerSubtitle = document.querySelector('.header-title p');
+            if (headerSubtitle) {
+                headerSubtitle.textContent = `Monitoring camera at ${currentCamera.url}`;
+            }
+            
+            // Display camera feed in video placeholder
+            if (videoPlaceholder) {
+                videoPlaceholder.innerHTML = '';
+                
+                const videoFrame = document.createElement('iframe');
+                videoFrame.src = `${currentCamera.url}/video`;
+                videoFrame.style.width = '100%';
+                videoFrame.style.height = '100%';
+                videoFrame.style.border = 'none';
+                videoFrame.style.borderRadius = '8px';
+                videoFrame.setAttribute('allowfullscreen', '');
+                
+                videoPlaceholder.appendChild(videoFrame);
+                
+                // Enable analyze button
+                if (analyzeVideoBtn) {
+                    analyzeVideoBtn.disabled = false;
+                    analyzeVideoBtn.innerHTML = '<i class="fas fa-chart-line"></i> Monitor Feed';
+                    
+                    // Change analyze button behavior for camera feeds
+                    analyzeVideoBtn.onclick = function() {
+                        monitorCameraFeed(currentCamera);
+                    };
+                }
+            }
+        }
+    }
+    
+    // Monitor camera feed
+    function monitorCameraFeed(camera) {
+        if (isProcessing) {
+            alert('Monitoring is already in progress.');
+            return;
+        }
+        
+        // Set processing state
+        isProcessing = true;
+        analyzeVideoBtn.disabled = true;
+        analyzeVideoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Monitoring...';
+        
+        // Show AI loading spinner
+        aiLoading.style.display = 'flex';
+        
+        // Generate mock monitoring data for the camera
+        setTimeout(() => {
+            // Generate realistic metrics based on time
+            const metricsData = generateMockMetrics();
+            
+            // Display monitoring results
+            updateStatsFromMetrics(metricsData);
+            
+            // Generate recommendations
+            generateRecommendations(metricsData);
+            
+            // Reset processing state after a delay
+            setTimeout(() => {
+                isProcessing = false;
+                analyzeVideoBtn.disabled = false;
+                analyzeVideoBtn.innerHTML = '<i class="fas fa-redo"></i> Refresh Monitor';
+                aiLoading.style.display = 'none';
+            }, 1000);
+            
+        }, 2000);
+    }
+    
+    // Generate mock metrics data for camera monitoring
+    function generateMockMetrics() {
+        const metrics = [];
+        const dataPoints = 60; // 1 minute worth of data
+        
+        let peopleCount = Math.floor(Math.random() * 30) + 10;
+        let density = peopleCount / 2000;  // arbitrary area size
+        
+        for (let i = 0; i < dataPoints; i++) {
+            // Simulate small changes in people count
+            const change = Math.floor(Math.random() * 5) - 2;
+            peopleCount = Math.max(5, peopleCount + change);
+            density = peopleCount / 2000;
+            
+            // Determine risk level based on density
+            let risk = 'Low';
+            if (density > 0.05) risk = 'High';
+            else if (density > 0.02) risk = 'Medium';
+            
+            // Determine crowd status based on density and trend
+            let status = 'Stable';
+            if (density > 0.04) status = 'Congested';
+            else if (density > 0.02 && Math.random() > 0.7) status = 'Unstable';
+            
+            metrics.push({
+                second: i,
+                average_people: peopleCount,
+                average_density: density,
+                risk: risk,
+                status: status
+            });
+        }
+        
+        return metrics;
+    }
+    
+    // Get cameras from local storage
+    function getCameras() {
+        const CAMERAS_STORAGE_KEY = 'dhristiAI_cameras';
+        const camerasJson = localStorage.getItem(CAMERAS_STORAGE_KEY);
+        return camerasJson ? JSON.parse(camerasJson) : [];
+    }
+    
+    // Initialize camera management in the sidebar
+    function initCameraManagement() {
+        // Update camera count
+        updateCameraCount();
+        
+        // Initialize camera list if in the sidebar
+        if (document.getElementById('camera-list')) {
+            // Camera management is handled by camera-management.js
+            console.log('Camera management initialized from dashboard');
+        }
+    }
+    
+    // Update camera count
+    function updateCameraCount() {
+        if (activeCamerasCountEl) {
+            const cameras = getCameras();
+            activeCamerasCountEl.textContent = cameras.length;
+        }
     }
     
     // Update the value displays for range inputs
@@ -96,20 +261,31 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Mobile navigation toggle
-        if (mobileNavToggle) {
-            mobileNavToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-                
-                // Toggle icon
-                const icon = this.querySelector('i');
-                if (sidebar.classList.contains('show')) {
-                    icon.className = 'fas fa-times';
-                } else {
-                    icon.className = 'fas fa-bars';
-                }
-            });
-        }
+            // Mobile navigation toggle
+    if (mobileNavToggle) {
+        mobileNavToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            
+            // Toggle icon
+            const icon = this.querySelector('i');
+            if (sidebar.classList.contains('show')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        });
+    }
+    
+    // Add direct click event for camera management button
+    const cameraManagementLink = document.querySelector('a[href*="live_feed"]');
+    if (cameraManagementLink) {
+        cameraManagementLink.addEventListener('click', function(e) {
+            // Prevent default only if JavaScript is needed for transition
+            // e.preventDefault();
+            console.log('Camera Management link clicked');
+            window.location.href = "/live_feed";
+        });
+    }
     }
     
     // Create placeholder chart until real data is available
