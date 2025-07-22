@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, url_for
+from flask import Flask, render_template, request, jsonify, url_for, flash, redirect
 import os
 from dotenv import load_dotenv
 from gradio_client import Client, handle_file
@@ -8,11 +8,17 @@ from werkzeug.utils import secure_filename
 import uuid
 import tempfile
 import time
+from flask_pymongo import PyMongo 
+from bson.objectid import ObjectId
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
+
+app.config['MONGO_URI'] = os.getenv('MONGO_URI')
+app.secret_key = os.urandom(24) 
+mongo = PyMongo(app)
 
 # Configure upload folder
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -30,13 +36,23 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
+    try:
+        cameras = list(mongo.db.cameras.find())
+    except Exception as e:
+        cameras = []
     return render_template('dashboard.html', 
-                          ai_server_url=AI_SERVER_URL)
+                          ai_server_url=AI_SERVER_URL,
+                          cameras=cameras) 
 
 @app.route('/live_feed')
 def live_feed():
+    try:
+        cameras = list(mongo.db.cameras.find())
+    except Exception as e:
+        cameras = []
     return render_template('live_feed.html',
-                          ai_server_url=AI_SERVER_URL)
+                          ai_server_url=AI_SERVER_URL,
+                          cameras=cameras)
 
 @app.route('/api/upload_video', methods=['POST'])
 def upload_video():
@@ -79,6 +95,52 @@ def upload_video():
             'status': 'error',
             'message': str(e)
         }), 500
+
+@app.route('/add_camera', methods=['POST'])
+def add_camera():
+    camera_url = request.form.get('camera_url').strip()
+
+    if not camera_url:
+        flash('Camera URL cannot be empty.', 'error')
+        return redirect(url_for('live_feed'))
+
+    # Ensure URL has http:// prefix
+    if not camera_url.startswith('http://') and not camera_url.startswith('https://'):
+        camera_url = 'http://' + camera_url
+    
+    # Remove trailing slash
+    if camera_url.endswith('/'):
+        camera_url = camera_url[:-1]
+
+    # Check if camera already exists
+    try:
+        already_exists = mongo.db.cameras.find_one({'url': camera_url})
+    except Exception as e:
+        already_exists = None
+    if already_exists:
+        flash('This camera has already been added.', 'warning')
+    else:
+        mongo.db.cameras.insert_one({
+            'url': camera_url,
+            'dateAdded': time.time()
+        })
+        flash('Camera added successfully!', 'success')
+
+    return redirect(url_for('live_feed'))
+
+@app.route('/delete_camera/<camera_id>', methods=['POST'])
+def delete_camera(camera_id):
+    try:
+        # The camera_id from the URL is a string, it needs to be converted to an ObjectId
+        result = mongo.db.cameras.delete_one({'_id': ObjectId(camera_id)})
+        if result.deleted_count > 0:
+            flash('Camera removed successfully.', 'success')
+        else:
+            flash('Camera not found.', 'error')
+    except Exception as e:
+        flash(f'An error occurred: {e}', 'error')
+        
+    return redirect(url_for('live_feed'))
 
 @app.route('/api/predict', methods=['POST'])
 def predict():

@@ -1,133 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DhristiAI - Live Camera Feeds</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="dashboard-body">
-    <div class="background dashboard-bg">
-        <div class="gradient-bg"></div>
-    </div>
-    
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar glass-card">
-            <div class="sidebar-header">
-                <h2>Drishti<span>AI</span></h2>
-                <p>Control Panel</p>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <ul>
-                    <li>
-                        <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
-                    </li>
-                    <li>
-                        <a href="#live-feeds-section"><i class="fas fa-video"></i> <span>Live Feeds</span></a>
-                    </li>
-                    <li class="active">
-                        <a href="{{ url_for('live_feed') }}"><i class="fas fa-camera"></i> <span>Camera Management</span></a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('dashboard') }}#heatmap-section"><i class="fas fa-map-marked-alt"></i> <span>Heatmap</span></a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('dashboard') }}#missing-persons-section"><i class="fas fa-user-check"></i> <span>Missing Persons</span></a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('dashboard') }}#analytics-section"><i class="fas fa-chart-line"></i> <span>Analytics</span></a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('dashboard') }}#settings-section"><i class="fas fa-cog"></i> <span>Settings</span></a>
-                    </li>
-                </ul>
-            </nav>
-            
+{% extends "base.html" %}
 
-            
-            <div class="sidebar-footer">
-                <a href="{{ url_for('index') }}" class="btn-secondary"><i class="fas fa-home"></i> <span>Back to Home</span></a>
-            </div>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="dashboard-header glass-card" id="live-feeds-section">
-                <div class="header-title">
-                    <h1>Camera Management</h1>
-                    <p>View and manage all connected camera feeds</p>
-                </div>
-                <div class="header-actions">
-                    <div class="real-time-status">
-                        <span class="status-dot"></span> <span id="cameras-status">0 Cameras Online</span>
-                    </div>
-                    <div class="user-profile">
-                        <div class="user-avatar-placeholder">A</div>
-                        <span>Admin</span>
-                    </div>
-                </div>
-            </header>
-            
-            <div class="camera-management-container glass-card">
-                <h4><i class="fas fa-plus-circle"></i> Add Camera</h4>
-                <div class="camera-form">
-                    <input type="text" id="camera-url" placeholder="http://192.0.0.2:8080" class="form-control">
-                    <button id="add-camera" class="btn-primary"><i class="fas fa-plus"></i> Add Camera</button>
-                </div>
-                <div class="description">
-                    <p><i class="fas fa-info-circle"></i> Enter the base URL of your camera feed (e.g., http://192.0.0.2:8080). The system will automatically append "/video" to access the video stream.</p>
-                </div>
-            </div>
+{% block title %}DhristiAI - Camera Management{% endblock %}
 
-            <div class="live-feeds-grid" id="feeds-container">
-                <!-- Camera feeds will be added here dynamically -->
-                <div class="glass-card feed-card empty-state">
-                    <div class="feed-video">
-                        <div class="video-placeholder">
-                            <i class="fas fa-video-slash"></i>
-                            <p>No cameras added</p>
-                        </div>
-                    </div>
-                    <div class="feed-info">
-                        <div class="feed-title">
-                            <h3>Add your first camera</h3>
-                            <span class="feed-status offline">Offline</span>
-                        </div>
-                        <p>Use the form above to add a new camera feed</p>
-                    </div>
-                </div>
-            </div>
-        </main>
+{% block content %}
+<header class="dashboard-header glass-card" id="live-feeds-section">
+    <div class="header-title">
+        <h1>Camera Management</h1>
+        <p>View and manage all connected camera feeds</p>
     </div>
-    
-    <!-- Confirm deletion modal -->
-    <div class="modal" id="delete-confirm-modal">
-        <div class="modal-content glass-card">
-            <div class="modal-header">
-                <h3>Confirm Deletion</h3>
-                <button class="close-modal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to remove this camera?</p>
-                <p class="camera-url"></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="cancel-delete">Cancel</button>
-                <button class="btn-primary" id="confirm-delete">Delete</button>
-            </div>
+    <div class="header-actions">
+        <div class="real-time-status">
+            <span class="status-dot"></span> <span>{{ cameras|length }} Camera{{ 's' if cameras|length != 1 else '' }} Online</span>
+        </div>
+        <div class="user-profile">
+            <div class="user-avatar-placeholder">A</div>
+            <span>Admin</span>
         </div>
     </div>
-    
-    <!-- Mobile Navigation Toggle Button -->
-    <button class="mobile-nav-toggle" id="mobile-nav-toggle">
-        <i class="fas fa-bars"></i>
-    </button>
-    
-    <script src="{{ url_for('static', filename='js/camera-management.js') }}"></script>
-</body>
-</html> 
+</header>
+
+<div class="camera-management-container glass-card">
+    <h4><i class="fas fa-plus-circle"></i> Add Camera</h4>
+    <!-- Display flashed messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <form action="{{ url_for('add_camera') }}" method="POST" class="camera-form">
+        <input type="text" id="camera-url" name="camera_url" placeholder="http://192.168.1.10:8080" class="form-control" required>
+        <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Add Camera</button>
+    </form>
+    <div class="description">
+        <p><i class="fas fa-info-circle"></i> Enter the base URL of the camera. The system will append "/video" for the stream.</p>
+    </div>
+</div>
+
+<div class="live-feeds-grid" id="feeds-container">
+    {% if cameras %}
+        {% for camera in cameras %}
+        <div class="glass-card feed-card" data-id="{{ camera._id }}">
+            <div class="feed-video">
+                <iframe src="{{ camera.url }}/video" width="100%" height="100%" allowfullscreen="" frameborder="0" title="Camera {{ loop.index }}"></iframe>
+            </div>
+            <div class="feed-info">
+                <div class="feed-title">
+                    <h3>Camera {{ loop.index }}</h3>
+                    <span class="feed-status online">Online</span>
+                </div>
+                <p>{{ camera.url }}</p>
+                <div class="feed-actions">
+                    <a href="{{ url_for('dashboard') }}?camera={{ camera._id }}" class="btn-primary btn-sm" style="flex: 1;"><i class="fas fa-chart-line"></i> View Stats</a>
+                    <button class="btn-secondary btn-sm delete-btn" data-camera-id="{{ camera._id }}" data-camera-url="{{ camera.url }}"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="glass-card feed-card empty-state">
+            <div class="feed-video">
+                <div class="video-placeholder">
+                    <i class="fas fa-video-slash"></i>
+                    <p>No cameras added</p>
+                </div>
+            </div>
+            <div class="feed-info">
+                <div class="feed-title">
+                    <h3>Add your first camera</h3>
+                    <span class="feed-status offline">Offline</span>
+                </div>
+                <p>Use the form above to add a new camera feed</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal" id="delete-confirm-modal">
+    <div class="modal-content glass-card">
+        <div class="modal-header">
+            <h3>Confirm Deletion</h3>
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to remove this camera?</p>
+            <p class="camera-url" style="font-weight: bold; margin-top: 10px;"></p>
+        </div>
+        <div class="modal-footer">
+            <form id="delete-form" method="POST" action="">
+                <button type="button" class="btn-secondary" id="cancel-delete">Cancel</button>
+                <button type="submit" class="btn-primary">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/camera-management.js') }}"></script>
+{% endblock %}

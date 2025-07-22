@@ -1,239 +1,176 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DhristiAI - Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="dashboard-body">
-    <div class="background dashboard-bg">
-        <div class="gradient-bg"></div>
+{% extends "base.html" %}
+
+{% block title %}DhristiAI - Dashboard{% endblock %}
+
+{% block content %}
+<header class="dashboard-header glass-card" id="dashboard-section">
+    <div class="header-title">
+        <h1>Dashboard</h1>
+        <p>Monitor crowd density and risk levels in real-time</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn-primary"><i class="fas fa-plus"></i> New Analysis</button>
+        <div class="user-profile">
+            <div class="user-avatar-placeholder">A</div>
+            <span>Admin</span>
+        </div>
+    </div>
+</header>
+
+<div class="dashboard-stats">
+    <div class="stats-card glass-card">
+        <div class="stats-icon green">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stats-info">
+            <h3>Current Crowd</h3>
+            <p class="stats-value">-</p>
+        </div>
     </div>
     
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar glass-card">
-            <div class="sidebar-header">
-                <h2>Drishti<span>AI</span></h2>
-                <p>Control Panel</p>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <ul>
-                    <li class="active">
-                        <a href="#dashboard-section"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
-                    </li>
-                    <li>
-                        <a href="#live-feeds-section"><i class="fas fa-video"></i> <span>Live Feeds</span></a>
-                    </li>
-                    <li>
-                        <a href="/live_feed" id="camera-management-link"><i class="fas fa-camera"></i> <span>Camera Management</span></a>
-                    </li>
-                    <li>
-                        <a href="#heatmap-section"><i class="fas fa-map-marked-alt"></i> <span>Heatmap</span></a>
-                    </li>
-                    <li>
-                        <a href="#missing-persons-section"><i class="fas fa-user-check"></i> <span>Missing Persons</span></a>
-                    </li>
-                    <li>
-                        <a href="#analytics-section"><i class="fas fa-chart-line"></i> <span>Analytics</span></a>
-                    </li>
-                    <li>
-                        <a href="#settings-section"><i class="fas fa-cog"></i> <span>Settings</span></a>
-                    </li>
-                </ul>
-            </nav>
-            
-
-            
-            <div class="sidebar-footer">
-                <a href="{{ url_for('index') }}" class="btn-secondary"><i class="fas fa-home"></i> <span>Back to Home</span></a>
-            </div>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="dashboard-header glass-card" id="dashboard-section">
-                <div class="header-title">
-                    <h1>Dashboard</h1>
-                    <p>Monitor crowd density and risk levels in real-time</p>
-                </div>
-                <div class="header-actions">
-                    <button class="btn-primary"><i class="fas fa-plus"></i> New Analysis</button>
-                    <div class="user-profile">
-                        <!-- Use user avatar if exists, otherwise display placeholder -->
-                        <div class="user-avatar-placeholder">A</div>
-                        <span>Admin</span>
-                    </div>
-                </div>
-            </header>
-            
-            <div class="dashboard-stats">
-                <div class="stats-card glass-card">
-                    <div class="stats-icon green">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stats-info">
-                        <h3>Current Crowd</h3>
-                        <p class="stats-value">-</p>
-                    </div>
-                </div>
-                
-                <div class="stats-card glass-card">
-                    <div class="stats-icon yellow">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="stats-info">
-                        <h3>Risk Level</h3>
-                        <p class="stats-value">-</p>
-                    </div>
-                </div>
-                
-                <div class="stats-card glass-card">
-                    <div class="stats-icon blue">
-                        <i class="fas fa-camera"></i>
-                    </div>
-                    <div class="stats-info">
-                        <h3>Active Cameras</h3>
-                        <p class="stats-value" id="active-cameras-count">0</p>
-                    </div>
-                </div>
-                
-                <div class="stats-card glass-card">
-                    <div class="stats-icon purple">
-                        <i class="fas fa-chart-area"></i>
-                    </div>
-                    <div class="stats-info">
-                        <h3>Crowd Density</h3>
-                        <p class="stats-value">0.000000</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="dashboard-grid">
-                <div class="dashboard-card glass-card" id="live-feeds-section">
-                    <div class="card-header">
-                        <h3><i class="fas fa-video"></i> Live Feed</h3>
-                        <div class="card-actions">
-                            <button class="btn-icon"><i class="fas fa-expand"></i></button>
-                            <button class="btn-icon"><i class="fas fa-cog"></i></button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="video-feed">
-                            <div class="video-placeholder">
-                                <i class="fas fa-play-circle"></i>
-                                <p>Select a video source</p>
-                            </div>
-                            <div class="video-controls">
-                                <button class="btn-secondary btn-sm" id="upload-video"><i class="fas fa-upload"></i> Upload Video</button>
-                                <button class="btn-primary btn-sm" id="analyze-video" disabled><i class="fas fa-search"></i> Analyze</button>
-                            </div>
-                            <div class="video-options">
-                                <div class="form-group">
-                                    <label>Frame Skip</label>
-                                    <input type="range" id="frame-skip" min="1" max="5" step="1" value="2">
-                                    <span class="range-value">2</span>
-                                </div>
-                                <div class="form-group">
-                                    <label>Max Workers</label>
-                                    <input type="range" id="max-workers" min="1" max="4" step="1" value="1">
-                                    <span class="range-value">1</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="dashboard-card glass-card" id="analytics-section">
-                    <div class="card-header">
-                        <h3><i class="fas fa-chart-line"></i> Crowd Density</h3>
-                        <div class="card-actions">
-                            <button class="btn-icon"><i class="fas fa-expand"></i></button>
-                            <button class="btn-icon"><i class="fas fa-download"></i></button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container" id="density-chart">
-                            <div class="chart-placeholder">
-                                <i class="fas fa-chart-bar"></i>
-                                <p>Density analytics will appear here</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="dashboard-card glass-card" id="missing-persons-section">
-                    <div class="card-header">
-                        <h3><i class="fas fa-robot"></i> AI Recommendations</h3>
-                        <div class="card-actions">
-                            <button class="btn-icon"><i class="fas fa-sync-alt"></i></button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="ai-recommendations">
-                            <div class="loading-spinner" id="ai-loading" style="display: none;">
-                                <div class="spinner"></div>
-                                <p>Generating recommendations...</p>
-                            </div>
-                            <div class="recommendation-list" id="ai-recommendations">
-                                <div class="recommendation-empty">
-                                    <i class="fas fa-robot"></i>
-                                    <p>Upload and analyze a video to get AI recommendations</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="dashboard-card glass-card" id="heatmap-section">
-                    <div class="card-header">
-                        <h3><i class="fas fa-map-marked-alt"></i> Heatmap</h3>
-                        <div class="card-actions">
-                            <button class="btn-icon"><i class="fas fa-expand"></i></button>
-                            <button class="btn-icon"><i class="fas fa-filter"></i></button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="heatmap-container" id="crowd-heatmap">
-                            <div class="heatmap-placeholder">
-                                <i class="fas fa-map"></i>
-                                <p>Heatmap visualization will appear here</p>
-                            </div>
-                            <div class="heatmap-legend">
-                                <div class="legend-item">
-                                    <span class="color-dot low"></span>
-                                    <p>Low Risk</p>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="color-dot medium"></span>
-                                    <p>Medium Risk</p>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="color-dot high"></span>
-                                    <p>High Risk</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <div class="stats-card glass-card">
+        <div class="stats-icon yellow">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stats-info">
+            <h3>Risk Level</h3>
+            <p class="stats-value">-</p>
+        </div>
     </div>
     
-    <!-- Mobile Navigation Toggle Button -->
-    <button class="mobile-nav-toggle" id="mobile-nav-toggle">
-        <i class="fas fa-bars"></i>
-    </button>
+    <div class="stats-card glass-card">
+        <div class="stats-icon blue">
+            <i class="fas fa-camera"></i>
+        </div>
+        <div class="stats-info">
+            <h3>Active Cameras</h3>
+            <!-- The camera count is passed from the dashboard route -->
+            <p class="stats-value" id="active-cameras-count">{{ cameras|length }}</p>
+        </div>
+    </div>
     
-    <input type="hidden" id="ai-server-url" value="{{ ai_server_url }}">
+    <div class="stats-card glass-card">
+        <div class="stats-icon purple">
+            <i class="fas fa-chart-area"></i>
+        </div>
+        <div class="stats-info">
+            <h3>Crowd Density</h3>
+            <p class="stats-value">0.000000</p>
+        </div>
+    </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/camera-management-link.js') }}"></script>
-</body>
-</html> 
+<div class="dashboard-grid">
+    <div class="dashboard-card glass-card" id="live-feeds-section">
+        <div class="card-header">
+            <h3><i class="fas fa-video"></i> Live Feed</h3>
+            <div class="card-actions">
+                <button class="btn-icon"><i class="fas fa-expand"></i></button>
+                <button class="btn-icon"><i class="fas fa-cog"></i></button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="video-feed">
+                <div class="video-placeholder">
+                    <i class="fas fa-play-circle"></i>
+                    <p>Select a video source</p>
+                </div>
+                <div class="video-controls">
+                    <button class="btn-secondary btn-sm" id="upload-video"><i class="fas fa-upload"></i> Upload Video</button>
+                    <button class="btn-primary btn-sm" id="analyze-video" disabled><i class="fas fa-search"></i> Analyze</button>
+                </div>
+                <div class="video-options">
+                    <div class="form-group">
+                        <label>Frame Skip</label>
+                        <input type="range" id="frame-skip" min="1" max="5" step="1" value="2">
+                        <span class="range-value">2</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Workers</label>
+                        <input type="range" id="max-workers" min="1" max="4" step="1" value="1">
+                        <span class="range-value">1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-card glass-card" id="analytics-section">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-line"></i> Crowd Density</h3>
+            <div class="card-actions">
+                <button class="btn-icon"><i class="fas fa-expand"></i></button>
+                <button class="btn-icon"><i class="fas fa-download"></i></button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" id="density-chart">
+                <div class="chart-placeholder">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>Density analytics will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-card glass-card" id="missing-persons-section">
+        <div class="card-header">
+            <h3><i class="fas fa-robot"></i> AI Recommendations</h3>
+            <div class="card-actions">
+                <button class="btn-icon"><i class="fas fa-sync-alt"></i></button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="ai-recommendations">
+                <div class="loading-spinner" id="ai-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Generating recommendations...</p>
+                </div>
+                <div class="recommendation-list" id="ai-recommendations">
+                    <div class="recommendation-empty">
+                        <i class="fas fa-robot"></i>
+                        <p>Upload and analyze a video to get AI recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-card glass-card" id="heatmap-section">
+        <div class="card-header">
+            <h3><i class="fas fa-map-marked-alt"></i> Heatmap</h3>
+            <div class="card-actions">
+                <button class="btn-icon"><i class="fas fa-expand"></i></button>
+                <button class="btn-icon"><i class="fas fa-filter"></i></button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="heatmap-container" id="crowd-heatmap">
+                <div class="heatmap-placeholder">
+                    <i class="fas fa-map"></i>
+                    <p>Heatmap visualization will appear here</p>
+                </div>
+                <div class="heatmap-legend">
+                    <div class="legend-item">
+                        <span class="color-dot low"></span>
+                        <p>Low Risk</p>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-dot medium"></span>
+                        <p>Medium Risk</p>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-dot high"></span>
+                        <p>High Risk</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<input type="hidden" id="ai-server-url" value="{{ ai_server_url }}">
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

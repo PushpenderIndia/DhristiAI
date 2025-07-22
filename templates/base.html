@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- The title block can be overridden by child templates -->
+    <title>{% block title %}DhristiAI{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- This block can be used for additional page-specific head elements -->
+    {% block head %}{% endblock %}
+</head>
+<body class="dashboard-body">
+    <div class="background dashboard-bg">
+        <div class="gradient-bg"></div>
+    </div>
+    
+    <div class="dashboard-container">
+        <!-- Sidebar: This is common to all pages -->
+        <aside class="sidebar glass-card">
+            <div class="sidebar-header">
+                <h2>Drishti<span>AI</span></h2>
+                <p>Control Panel</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <!-- Determine active link based on request endpoint -->
+                    <li class="{{ 'active' if request.endpoint == 'dashboard' else '' }}">
+                        <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+                    </li>
+                    <li class="{{ 'active' if request.endpoint == 'live_feed' else '' }}">
+                        <a href="{{ url_for('live_feed') }}"><i class="fas fa-camera"></i> <span>Camera Management</span></a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard') }}#heatmap-section"><i class="fas fa-map-marked-alt"></i> <span>Heatmap</span></a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard') }}#missing-persons-section"><i class="fas fa-user-check"></i> <span>Missing Persons</span></a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard') }}#analytics-section"><i class="fas fa-chart-line"></i> <span>Analytics</span></a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dashboard') }}#settings-section"><i class="fas fa-cog"></i> <span>Settings</span></a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="{{ url_for('index') }}" class="btn-secondary"><i class="fas fa-home"></i> <span>Back to Home</span></a>
+            </div>
+        </aside>
+        
+        <!-- Main Content: This block will be filled by child templates -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation Toggle Button -->
+    <button class="mobile-nav-toggle" id="mobile-nav-toggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- This block can be used for page-specific modals or other elements -->
+    {% block modals %}{% endblock %}
+
+    <!-- Common JavaScript files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="{{ url_for('static', filename='js/mobile-nav.js') }}"></script>
+    
+    <!-- This block can be used for page-specific JavaScript files -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
