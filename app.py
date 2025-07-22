@@ -40,9 +40,11 @@ def dashboard():
         cameras = list(mongo.db.cameras.find())
     except Exception as e:
         cameras = []
+
+    print(f"Loaded {len(cameras)} cameras from the database")
     return render_template('dashboard.html', 
                           ai_server_url=AI_SERVER_URL,
-                          cameras=cameras) 
+                          cameras=len(cameras)) 
 
 @app.route('/live_feed')
 def live_feed():
