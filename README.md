@@ -252,13 +252,13 @@ vim .env
 
 #### Run Docker 
 ```
-docker compose up --build -d
+docker-compose up --build -d
 ```
 
 ### If want to rebuild the Docker Image
 ```
 docker system prune -a -f
-docker compose up --build -d
+docker-compose up --build -d
 ```
 
 ### Testing Deployment
