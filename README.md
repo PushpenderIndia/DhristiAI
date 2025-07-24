@@ -193,6 +193,15 @@ gcloud compute instances create drishti-ai-vm --project=groovy-camera-466508-a4 
 
 # Create the firewall rule for the RTMP port
 gcloud compute firewall-rules create allow-rtmp-1935 --network=default --allow=tcp:1935 --source-ranges=0.0.0.0/0 --target-tags=rtmp-server
+
+# Stop the VM
+gcloud compute instances stop drishti-ai-vm --zone=asia-south1-a
+
+# Resize the Disk: This command resizes the boot disk (which has the same name as the VM) to 30 GB.
+gcloud compute disks resize drishti-ai-vm --size=30GB --zone=asia-south1-a
+
+# Start the VM
+gcloud compute instances start drishti-ai-vm --zone=asia-south1-a
 ```
 
 ### Deploy Your Application to the VM
@@ -230,6 +239,35 @@ gcloud compute ssh drishti-ai-vm --zone=asia-south1-a
 git clone https://github.com/PushpenderIndia/DhristiAI.git
 cd DhristiAI
 ```
+
+#### Create .env
+```
+cp env.sample .env
+vim .env  
+# Update the creds
+```
+
+#### Run Docker 
+```
+docker compose up --build -d
+```
+
+### Testing Deployment
+
+#### Get your VM's public IP address
+```
+gcloud compute instances describe drishti-ai-vm --zone=asia-south1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+```
+
+#### Access your web app in a browser at http://<YOUR_VM_IP>:5000.
+
+#### Push your live stream to the RTMP URL: 
+
+rtmp://<YOUR_VM_IP>:1935/live/<your_stream_key>.
+
+#### View the feed on your web application. It will be served from 
+
+http://<YOUR_VM_IP>:8080/hls/<your_stream_key>.m3u8.
 
 ## License
 
