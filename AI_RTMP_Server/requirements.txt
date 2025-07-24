@@ -1,19 +1,19 @@
+# Web Framework & Server
 fastapi
 uvicorn[standard]
+python-multipart
 websockets
-python-multipart  
-opencv-python-headless
-ultralytics
-# For DeepFace
-numpy
-pandas
-tqdm
-gdown
-Pillow
-tensorflow>=2.12.0
-keras>=2.12.0
-deepface
-# PyTorch
+gunicorn
+
+# AI & Computer Vision
+# torch/torchvision are for Ultralytics
 torch
 torchvision
-gunicorn
+
+# tensorflow is for DeepFace
+tensorflow
+
+# Main AI application libraries
+ultralytics
+deepface
+opencv-python-headless
