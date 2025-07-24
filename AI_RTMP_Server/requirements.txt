@@ -16,3 +16,4 @@ deepface
 # PyTorch
 torch
 torchvision
+gunicorn
