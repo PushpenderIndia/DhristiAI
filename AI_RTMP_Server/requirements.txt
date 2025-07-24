@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+websockets
+python-multipart  
+opencv-python-headless
+ultralytics
+# For DeepFace
+numpy
+pandas
+tqdm
+gdown
+Pillow
+tensorflow>=2.12.0
+keras>=2.12.0
+deepface
+# PyTorch
+torch
+torchvision

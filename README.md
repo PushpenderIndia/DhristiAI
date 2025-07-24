@@ -177,6 +177,26 @@ Our USP lies in the fusion of real-time vision + intelligent recommendations. We
 
 ---
 
+## Deployment
+
+Deploy on Google Cloud Virtual Machine
+
+```
+# Login to your google cloud
+gcloud auth login
+
+# Set Project ID (e.g. Project ID: groovy-camera-466508-a4)
+gcloud config set project groovy-camera-466508-a4
+
+# Create the VM instance
+gcloud compute instances create drishti-ai-vm --project=groovy-camera-466508-a4 --zone=asia-south1-a --machine-type=e2-standard-2 --tags=http-server,https-server,rtmp-server --image=debian-11-bullseye-v20240515 --image-project=debian-cloud
+
+# Create the firewall rule for the RTMP port
+gcloud compute firewall-rules create allow-rtmp-1935 --network=default --allow=tcp:1935 --source-ranges=0.0.0.0/0 --target-tags=rtmp-server
+
+
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

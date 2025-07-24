@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}DhristiAI - Live Feeds & Management{% endblock %}
+
+{% block content %}
+<header class="dashboard-header glass-card" id="live-feeds-section">
+    <div class="header-title">
+        <h1>Live Feeds & Management</h1>
+        <p>Manage camera streams pushed via RTMP and view them live.</p>
+    </div>
+    <div class="header-actions">
+        <div class="real-time-status">
+            <span class="status-dot"></span> <span>{{ cameras|length }} Camera{{ 's' if cameras|length != 1 else '' }} Configured</span>
+        </div>
+        <div class="user-profile">
+            <div class="user-avatar-placeholder">A</div>
+            <span>Admin</span>
+        </div>
+    </div>
+</header>
+
+<div class="camera-management-container glass-card">
+    <h4><i class="fas fa-plus-circle"></i> Add a New Camera Stream</h4>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <form action="{{ url_for('add_camera_rtmp') }}" method="POST" class="camera-form" style="display: flex; gap: 15px;">
+        <input type="text" name="camera_name" placeholder="e.g., Front Door" class="form-control" required style="flex: 1;">
+        <input type="text" name="stream_key" placeholder="e.g., front-door-cam-01" class="form-control" required style="flex: 1;">
+        <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Add Stream</button>
+    </form>
+    <div class="description">
+        <p><i class="fas fa-info-circle"></i> Provide a unique name and a simple **Stream Key** (no spaces or special characters). The system will generate the full RTMP URL for you to use in your camera or streaming software.</p>
+    </div>
+</div>
+
+<div class="live-feeds-grid" id="feeds-container">
+    {% if cameras %}
+        {% for camera in cameras %}
+        <div class="glass-card feed-card" data-id="{{ camera._id }}">
+            <div class="feed-video">
+                <video id="video-{{ camera.stream_key }}" class="hls-video" muted autoplay playsinline controls></video>
+            </div>
+            <div class="feed-info">
+                <div class="feed-title">
+                    <h3>{{ camera.name }}</h3>
+                    <span id="status-{{ camera.stream_key }}" class="feed-status offline">Offline</span>
+                </div>
+                <div class="rtmp-url-info">
+                    <label>RTMP Push URL:</label>
+                    <input type="text" value="{{ camera.rtmp_push_url }}" readonly class="form-control-static">
+                </div>
+                <div class="feed-actions">
+                    <a href="{{ url_for('dashboard') }}?camera={{ camera._id }}" class="btn-primary btn-sm" style="flex: 1;"><i class="fas fa-chart-line"></i> View Stats</a>
+                    <button class="btn-secondary btn-sm delete-btn" data-camera-id="{{ camera._id }}" data-camera-url="{{ camera.name }}"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="glass-card feed-card empty-state">
+            <div class="feed-video">
+                <div class="video-placeholder">
+                    <i class="fas fa-video-slash"></i>
+                    <p>No cameras added</p>
+                </div>
+            </div>
+            <div class="feed-info">
+                <div class="feed-title">
+                    <h3>Add your first stream</h3>
+                    <span class="feed-status offline">Offline</span>
+                </div>
+                <p>Use the form above to configure a new camera stream.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal" id="delete-confirm-modal">
+    <div class="modal-content glass-card">
+        <div class="modal-header">
+            <h3>Confirm Deletion</h3>
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to remove this camera?</p>
+            <p class="camera-url" style="font-weight: bold; margin-top: 10px;"></p>
+        </div>
+        <div class="modal-footer">
+            <form id="delete-form" method="POST" action="">
+                <button type="button" class="btn-secondary" id="cancel-delete">Cancel</button>
+                <button type="submit" class="btn-primary">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Initialize HLS for each camera
+    {% for camera in cameras %}
+    (function() {
+        const video = document.getElementById('video-{{ camera.stream_key }}');
+        const statusEl = document.getElementById('status-{{ camera.stream_key }}');
+        const videoSrc = '{{ camera.hls_playback_url }}';
+
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                console.log('Manifest parsed for {{ camera.stream_key }}, playing video.');
+                video.play();
+                if(statusEl) {
+                    statusEl.textContent = 'Online';
+                    statusEl.classList.remove('offline');
+                    statusEl.classList.add('online');
+                }
+            });
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    console.error('Fatal HLS error for stream {{ camera.stream_key }}:', data.type);
+                    if(statusEl) {
+                        statusEl.textContent = 'Error';
+                        statusEl.classList.remove('online');
+                        statusEl.classList.add('offline');
+                    }
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native HLS support on platforms like Safari
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function () {
+                video.play();
+                if(statusEl) {
+                    statusEl.textContent = 'Online';
+                    statusEl.classList.remove('offline');
+                    statusEl.classList.add('online');
+                }
+            });
+        }
+    })();
+    {% endfor %}
+
+    // --- Delete Modal Logic ---
+    const deleteModal = document.getElementById('delete-confirm-modal');
+    const deleteForm = document.getElementById('delete-form');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+    const closeModalBtn = deleteModal.querySelector('.close-modal');
+
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const cameraId = this.dataset.cameraId;
+            const cameraUrl = this.dataset.cameraUrl; // Now this is the camera name
+
+            // Set the form action URL
+            deleteForm.action = `/delete_camera/${cameraId}`;
+            
+            // Update modal text
+            deleteModal.querySelector('.camera-url').textContent = cameraUrl;
+
+            // Show the modal
+            deleteModal.style.display = 'flex';
+        });
+    });
+
+    function hideModal() {
+        deleteModal.style.display = 'none';
+    }
+
+    cancelDeleteBtn.addEventListener('click', hideModal);
+    closeModalBtn.addEventListener('click', hideModal);
+    window.addEventListener('click', function(event) {
+        if (event.target == deleteModal) {
+            hideModal();
+        }
+    });
+});
+</script>
+{% endblock %}

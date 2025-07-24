@@ -56,6 +56,16 @@ def live_feed():
                           ai_server_url=AI_SERVER_URL,
                           cameras=cameras)
 
+@app.route('/live_feed_rtmp')
+def live_feed_rtmp():
+    try:
+        cameras = list(mongo.db.cameras.find())
+    except Exception as e:
+        cameras = []
+    return render_template('live_feed_rtmp.html',
+                          ai_server_url=AI_SERVER_URL,
+                          cameras=cameras)
+
 @app.route('/api/upload_video', methods=['POST'])
 def upload_video():
     try:
@@ -129,6 +139,37 @@ def add_camera():
         flash('Camera added successfully!', 'success')
 
     return redirect(url_for('live_feed'))
+
+@app.route('/add_camera_rtmp', methods=['POST'])
+def add_camera_rtmp():
+    camera_name = request.form.get('camera_name', '').strip()
+    stream_key = request.form.get('stream_key', '').strip()
+
+    if not camera_name or not stream_key:
+        flash('Camera Name and Stream Key cannot be empty.', 'error')
+        return redirect(url_for('live_feed'))
+
+    # Check if stream key already exists
+    if mongo.db.cameras.find_one({'stream_key': stream_key}):
+        flash('This Stream Key is already in use.', 'warning')
+    else:
+        # Generate the URLs based on your NGINX server setup
+        # NOTE: Use your server's public IP or domain name, not localhost.
+        server_ip = AI_SERVER_URL #"34.100.129.109" 
+
+        rtmp_push_url = f"rtmp://{server_ip}:1935/live/{stream_key}"
+        hls_playback_url = f"http://{server_ip}:8080/hls/{stream_key}.m3u8"
+
+        mongo.db.cameras.insert_one({
+            'name': camera_name,
+            'stream_key': stream_key,
+            'rtmp_push_url': rtmp_push_url,
+            'hls_playback_url': hls_playback_url,
+            'dateAdded': time.time()
+        })
+        flash('Camera stream added successfully!', 'success')
+
+    return redirect(url_for('live_feed_rtmp'))
 
 @app.route('/delete_camera/<camera_id>', methods=['POST'])
 def delete_camera(camera_id):
