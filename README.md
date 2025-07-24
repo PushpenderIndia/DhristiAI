@@ -177,9 +177,9 @@ Our USP lies in the fusion of real-time vision + intelligent recommendations. We
 
 ---
 
-## Deployment
+## Deployment - Deploy on Google Cloud Virtual Machine
 
-Deploy on Google Cloud Virtual Machine
+### Create Google VM
 
 ```
 # Login to your google cloud
@@ -193,8 +193,42 @@ gcloud compute instances create drishti-ai-vm --project=groovy-camera-466508-a4 
 
 # Create the firewall rule for the RTMP port
 gcloud compute firewall-rules create allow-rtmp-1935 --network=default --allow=tcp:1935 --source-ranges=0.0.0.0/0 --target-tags=rtmp-server
+```
 
+### Deploy Your Application to the VM
 
+#### SSH into your new VM
+```
+gcloud compute ssh drishti-ai-vm --zone=asia-south1-a
+```
+
+### Update source list
+```
+sudo nano /etc/apt/sources.list
+# Comment out the broken line i.e. # deb https://deb.debian.org/debian bullseye-backports main
+# CTRL + O
+# CTRL + X
+```
+
+#### Run the following commands inside the VM's terminal
+```
+# Install Git, Docker, and Docker Compose
+sudo apt-get update && sudo apt-get install -y git docker.io docker-compose
+
+# Add user to the docker group (requires logout/login to apply)
+sudo usermod -aG docker $USER
+exit
+```
+
+#### SSH back into the VM
+```
+gcloud compute ssh drishti-ai-vm --zone=asia-south1-a
+```
+
+#### Clone your repository and navigate into it
+```
+git clone https://github.com/PushpenderIndia/DhristiAI.git
+cd DhristiAI
 ```
 
 ## License
