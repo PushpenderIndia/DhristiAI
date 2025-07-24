@@ -263,6 +263,13 @@ docker-compose up --build -d
 
 ### Testing Deployment
 
+#### Validate whether docker images are running
+```
+docker ps
+docker-compose logs webapp 
+docker-compose logs ai-backend
+```
+
 #### Get your VM's public IP address
 ```
 gcloud compute instances describe drishti-ai-vm --zone=asia-south1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
