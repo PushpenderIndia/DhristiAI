@@ -188,6 +188,9 @@ gcloud auth login
 # Set Project ID (e.g. Project ID: groovy-camera-466508-a4)
 gcloud config set project groovy-camera-466508-a4
 
+# Updated Project Name in Google Console (optional)
+gcloud projects update groovy-camera-466508-a4 --name="DrishtiAI"
+
 # Create the VM instance
 gcloud compute instances create drishti-ai-vm --project=groovy-camera-466508-a4 --zone=asia-south1-a --machine-type=e2-standard-2 --tags=http-server,https-server,rtmp-server --image=debian-11-bullseye-v20240515 --image-project=debian-cloud
 
