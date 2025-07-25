@@ -281,11 +281,15 @@ gcloud compute instances describe drishti-ai-vm --zone=asia-south1-a --format='g
 
 #### Push your live stream to the RTMP URL: 
 
+```
 rtmp://<YOUR_VM_IP>:1935/live/<your_stream_key>.
+```
 
 #### View the feed on your web application. It will be served from 
 
+```
 http://<YOUR_VM_IP>:8080/hls/<your_stream_key>.m3u8.
+```
 
 #### Pushing Local video to RTMP Server
 
