@@ -200,8 +200,8 @@ gcloud compute firewall-rules create allow-rtmp-1935 --network=default --allow=t
 # Stop the VM
 gcloud compute instances stop drishti-ai-vm --zone=asia-south1-a
 
-# Resize the Disk: This command resizes the boot disk (which has the same name as the VM) to 30 GB.
-gcloud compute disks resize drishti-ai-vm --size=30GB --zone=asia-south1-a
+# Resize the Disk: This command resizes the boot disk (which has the same name as the VM) to 50 GB.
+gcloud compute disks resize drishti-ai-vm --size=50GB --zone=asia-south1-a
 
 # Start the VM
 gcloud compute instances start drishti-ai-vm --zone=asia-south1-a
@@ -284,6 +284,12 @@ rtmp://<YOUR_VM_IP>:1935/live/<your_stream_key>.
 #### View the feed on your web application. It will be served from 
 
 http://<YOUR_VM_IP>:8080/hls/<your_stream_key>.m3u8.
+
+#### To Stop Docker
+```
+cd ~/DhristiAI
+docker-compose down
+```
 
 ## License
 

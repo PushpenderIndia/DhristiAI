@@ -10,8 +10,7 @@ ffmpy==0.6.0
 filelock==3.18.0
 Flask==2.2.5
 fsspec==2025.7.0
-gradio==5.9.1
-gradio_client==1.5.2
+gradio==4.39.0
 h11==0.16.0
 hf-xet==1.1.5
 httpcore==1.0.9

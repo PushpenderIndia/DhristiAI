@@ -3,18 +3,12 @@ fastapi
 uvicorn[standard]
 python-multipart
 websockets
-gunicorn
 
 # AI & Computer Vision
-# torch/torchvision are for Ultralytics
 torch
 torchvision
-
-# tensorflow is for DeepFace
-tensorflow
-
-# Main AI application libraries
 ultralytics
-deepface
 opencv-python-headless
-tf-keras
+
+# Gradio API Client
+gradio==5.38.2
