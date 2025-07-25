@@ -18,11 +18,11 @@
                 <label for="person_image" style="font-weight: 500;">Person Image</label>
                 <input type="file" class="form-control" id="person_image" name="person_image" accept="image/*" required style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
             </div>
-            <div class="form-group">
-                <label for="telegram_receiver" style="font-weight: 500;">Telegram Username or Number</label>
-                <input type="text" class="form-control" id="telegram_receiver" name="telegram_receiver" required placeholder="e.g. @username or +1234567890" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-            </div>
             <button type="submit" class="btn-primary" style="margin-top: 8px; font-size: 1.1em; padding: 10px 0; border-radius: 6px;">🔍 Find This Person</button>
+            <div style="margin-top: 12px; color: #1976d2; font-size: 1em; text-align: center;">
+                Notifications will be sent to the <b>DrishtiAI_Channel</b>.<br>
+                Join here: <a href="https://t.me/+xd59C_D0NYllYTI9" target="_blank">https://t.me/+xd59C_D0NYllYTI9</a>
+            </div>
         </form>
         <div id="find-person-result" style="margin-top: 32px;"></div>
     </div>
@@ -48,30 +48,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.status === 'success') {
                     let html = '';
                     if (data.results && data.results.length > 0) {
-                        let found = false;
                         data.results.forEach(r => {
-                            // Only show cards for matches
-                            if (r.is_match) {
-                                found = true;
-                                html += `
-                                <div class="glass-card camera-match-card" style="margin-bottom: 24px; padding: 18px 20px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+                            let cardColor = r.is_match ? '#e8f5e9' : (r.result.includes('offline') || r.result.includes('Error') ? '#fff3e0' : '#e3eafc');
+                            let borderColor = r.is_match ? '#4caf50' : (r.result.includes('offline') || r.result.includes('Error') ? '#ff9800' : '#1976d2');
+                            let statusText = r.is_match ? 'Match Found' : (r.result.includes('offline') || r.result.includes('Error') ? 'Camera Offline/Error' : 'No Match');
+                            let statusColor = r.is_match ? '#4caf50' : (r.result.includes('offline') || r.result.includes('Error') ? '#ff9800' : '#1976d2');
+                            let simText = r.similarity ? `<div style='font-size:0.95em;color:#555;'>Similarity: ${r.similarity}</div>` : '';
+                            html += `
+                                <div class="glass-card camera-match-card" style="margin-bottom: 24px; padding: 18px 20px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); background: ${cardColor}; border-left: 6px solid ${borderColor};">
                                     <div style="flex: 0 0 120px;">
-                                        <img src="${r.frame_url || ''}" alt="Camera Frame" style="width: 120px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #4caf50; background: #eee;">
+                                        <img src="${r.frame_url || ''}" alt="Camera Frame" style="width: 120px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid ${borderColor}; background: #eee;">
                                     </div>
                                     <div style="flex: 1;">
                                         <h4 style="margin: 0 0 6px 0; color: #333;">Camera: <span style="color: #1976d2;">${r.camera_name || r.camera}</span></h4>
                                         <div style="font-size: 1.05em; margin-bottom: 4px;">${r.result.replace(/\n/g, '<br>')}</div>
-                                        <div style="color: #4caf50; font-weight: 600;">Match Found</div>
+                                        ${simText}
+                                        <div style="color: ${statusColor}; font-weight: 600;">${statusText}</div>
                                     </div>
                                 </div>
-                                `;
-                            }
+                            `;
                         });
-                        if (!found) {
-                            html = '<div class="glass-card" style="padding: 24px; text-align: center; color: #b71c1c; font-size: 1.1em;">No matches found on any camera.</div>';
-                        }
                     } else {
-                        html = '<div class="glass-card" style="padding: 24px; text-align: center; color: #b71c1c; font-size: 1.1em;">No matches found on any camera.</div>';
+                        html = '<div class="glass-card" style="padding: 24px; text-align: center; color: #b71c1c; font-size: 1.1em;">No results from any camera.</div>';
                     }
                     resultDiv.innerHTML = html;
                 } else {

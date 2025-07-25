@@ -10,8 +10,6 @@ import tempfile
 import time
 from flask_pymongo import PyMongo 
 from bson.objectid import ObjectId
-import telegram
-from telegram import Bot
 
 # Load environment variables
 load_dotenv()
@@ -34,23 +32,48 @@ AI_SERVER_URL = os.getenv('AI_SERVER_URL')
 RTMP_SERVER_URL = os.getenv('RTMP_SERVER_URL')
 FACE_RECOGNITION_AI_SERVER_URL = os.getenv('FACE_RECOGNITION_AI_SERVER_URL')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_BOT = Bot(token=TELEGRAM_BOT_TOKEN) if TELEGRAM_BOT_TOKEN else None
+TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+TELEGRAM_CHANNEL_ID = -1002876258121
 
-def send_telegram_notification(receiver, message, image_path=None):
-    if not TELEGRAM_BOT:
+def send_telegram_message(receiver, message):
+    if not TELEGRAM_BOT_TOKEN:
         print('Telegram bot not configured.')
         return
+    # Only check .startswith if receiver is a string
+    if isinstance(receiver, str) and not receiver.startswith('@') and not receiver.startswith('+'):
+        receiver = '@' + receiver
+    url = f"{TELEGRAM_API_URL}/sendMessage"
+    data = {
+        "chat_id": receiver,
+        "text": message
+    }
     try:
-        # If receiver is username, ensure it starts with @
-        if receiver and not receiver.startswith('@') and not receiver.startswith('+'):
-            receiver = '@' + receiver
-        if image_path:
-            with open(image_path, 'rb') as img:
-                TELEGRAM_BOT.send_photo(chat_id=receiver, photo=img, caption=message)
-        else:
-            TELEGRAM_BOT.send_message(chat_id=receiver, text=message)
+        resp = requests.post(url, data=data)
+        print("Telegram message sent:", resp.text)
     except Exception as e:
-        print(f'Failed to send Telegram message: {e}')
+        print("Telegram send error:", e)
+
+def send_telegram_photo(receiver, message, image_path):
+    if not TELEGRAM_BOT_TOKEN:
+        print('Telegram bot not configured.')
+        return
+    if isinstance(receiver, str) and not receiver.startswith('@') and not receiver.startswith('+'):
+        receiver = '@' + receiver
+    url = f"{TELEGRAM_API_URL}/sendPhoto"
+    with open(image_path, "rb") as img:
+        files = {"photo": img}
+        data = {"chat_id": receiver, "caption": message}
+        try:
+            resp = requests.post(url, data=data, files=files)
+            print("Telegram photo sent:", resp.text)
+        except Exception as e:
+            print("Telegram send error:", e)
+
+def send_telegram_notification(receiver, message, image_path=None):
+    if image_path:
+        send_telegram_photo(receiver, message, image_path)
+    else:
+        send_telegram_message(receiver, message)
 
 @app.route('/')
 def index():
@@ -291,9 +314,8 @@ def find_person():
     try:
         person_name = request.form.get('person_name', '').strip()
         person_image = request.files.get('person_image')
-        telegram_receiver = request.form.get('telegram_receiver', '').strip()
-        if not person_name or not person_image or not telegram_receiver:
-            return jsonify({'status': 'error', 'message': 'Name, image, and Telegram receiver are required.'}), 400
+        if not person_name or not person_image:
+            return jsonify({'status': 'error', 'message': 'Name and image are required.'}), 400
         filename = secure_filename(f"{uuid.uuid4()}_{person_image.filename}")
         temp_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         person_image.save(temp_path)
@@ -338,7 +360,7 @@ def find_person():
                         frame_url_out = url_for('static', filename=f'processed/{processed_filename}')
                         # Send Telegram notification for match
                         msg = f"✅ Person '{person_name}' FOUND!\nCamera: {cam_name or cam_url}\nSimilarity Score: {similarity if similarity else '?'}"
-                        send_telegram_notification(telegram_receiver, msg, processed_path)
+                        send_telegram_notification(TELEGRAM_CHANNEL_ID, msg, processed_path)
                         found = True
                         found_result = {'camera': cam_url, 'camera_name': cam_name, 'result': result_str, 'is_match': is_match, 'similarity': similarity, 'frame_url': frame_url_out}
                     results.append({
@@ -358,7 +380,7 @@ def find_person():
         # If no match found, send not found message
         if not found:
             msg = f"❌ Sorry, person '{person_name}' was NOT found on any camera. We will keep monitoring."
-            send_telegram_notification(telegram_receiver, msg)
+            send_telegram_notification(TELEGRAM_CHANNEL_ID, msg)
         return jsonify({'status': 'success', 'results': results})
     except Exception as e:
         import traceback; traceback.print_exc()
