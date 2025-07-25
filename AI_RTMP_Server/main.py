@@ -54,6 +54,8 @@ def get_crowd_status(density):
     else: return 'Critical'
 
 def enhance_frame(frame, clipLimit=2.0, tileGrid=(8,8)):
+    return frame
+
     """Enhances frame contrast using CLAHE."""
     lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
@@ -81,9 +83,10 @@ def process_frame_realtime(frame, frame_count):
     # B. Face Recognition using Gradio Client (Replaces DeepFace)
     detected_persons = []
     known_face_files = [f for f in os.listdir(KNOWN_FACES_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    lol = 11
 
     # Periodically run the expensive face recognition process
-    if known_face_files and people_count > 0 and frame_count % 90 == 0: # Reduced frequency due to API calls
+    if known_face_files and people_count > 0 and frame_count % 90 == 0 and lol == 10: # Reduced frequency due to API calls
         detected_person_boxes = [box.xyxy[0].cpu().numpy().astype(int) for box in results.boxes]
 
         for box in detected_person_boxes:
