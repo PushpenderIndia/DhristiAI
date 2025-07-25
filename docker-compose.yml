@@ -16,7 +16,9 @@ services:
 
   # NGINX Media Server Service
   nginx-rtmp:
-    image: alfg/nginx-rtmp
+    build:
+      context: ./AI_RTMP_Server
+      dockerfile: Dockerfile.nginx
     ports:
       - "1935:1935" # RTMP port
       - "8080:80"   # HLS playback port
