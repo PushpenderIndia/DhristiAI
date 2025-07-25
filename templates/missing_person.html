@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Find Missing Person{% endblock %}
+
+{% block content %}
+<div class="dashboard-card glass-card missing-person-card" style="max-width: 520px; margin: 40px auto; padding: 32px 32px 24px 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);">
+    <div class="card-header" style="border-bottom: none; text-align: center;">
+        <h2 style="margin-bottom: 8px;"><i class="fas fa-user-check"></i> Find Missing Person</h2>
+        <p style="color: #888; font-size: 1.1em;">Upload a photo and search across all cameras</p>
+    </div>
+    <div class="card-body">
+        <form id="find-person-form" enctype="multipart/form-data" method="post" action="{{ url_for('find_person') }}" style="display: flex; flex-direction: column; gap: 18px;">
+            <div class="form-group">
+                <label for="person_name" style="font-weight: 500;">Person Name</label>
+                <input type="text" class="form-control" id="person_name" name="person_name" required placeholder="Enter name..." style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+            </div>
+            <div class="form-group">
+                <label for="person_image" style="font-weight: 500;">Person Image</label>
+                <input type="file" class="form-control" id="person_image" name="person_image" accept="image/*" required style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+            </div>
+            <div class="form-group">
+                <label for="telegram_receiver" style="font-weight: 500;">Telegram Username or Number</label>
+                <input type="text" class="form-control" id="telegram_receiver" name="telegram_receiver" required placeholder="e.g. @username or +1234567890" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 8px; font-size: 1.1em; padding: 10px 0; border-radius: 6px;">🔍 Find This Person</button>
+        </form>
+        <div id="find-person-result" style="margin-top: 32px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('find-person-form');
+    const resultDiv = document.getElementById('find-person-result');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            resultDiv.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Searching...</p></div>';
+            const formData = new FormData(form);
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    let html = '';
+                    if (data.results && data.results.length > 0) {
+                        let found = false;
+                        data.results.forEach(r => {
+                            // Only show cards for matches
+                            if (r.is_match) {
+                                found = true;
+                                html += `
+                                <div class="glass-card camera-match-card" style="margin-bottom: 24px; padding: 18px 20px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+                                    <div style="flex: 0 0 120px;">
+                                        <img src="${r.frame_url || ''}" alt="Camera Frame" style="width: 120px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #4caf50; background: #eee;">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h4 style="margin: 0 0 6px 0; color: #333;">Camera: <span style="color: #1976d2;">${r.camera_name || r.camera}</span></h4>
+                                        <div style="font-size: 1.05em; margin-bottom: 4px;">${r.result.replace(/\n/g, '<br>')}</div>
+                                        <div style="color: #4caf50; font-weight: 600;">Match Found</div>
+                                    </div>
+                                </div>
+                                `;
+                            }
+                        });
+                        if (!found) {
+                            html = '<div class="glass-card" style="padding: 24px; text-align: center; color: #b71c1c; font-size: 1.1em;">No matches found on any camera.</div>';
+                        }
+                    } else {
+                        html = '<div class="glass-card" style="padding: 24px; text-align: center; color: #b71c1c; font-size: 1.1em;">No matches found on any camera.</div>';
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">${data.message}</div>`;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">Error: ${err}</div>`;
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

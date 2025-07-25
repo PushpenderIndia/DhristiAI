@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, url_for, flash, redirect
+from flask import Flask, render_template, request, jsonify, url_for, flash, redirect, send_from_directory
 import os
 from dotenv import load_dotenv
 from gradio_client import Client, handle_file
@@ -10,6 +10,8 @@ import tempfile
 import time
 from flask_pymongo import PyMongo 
 from bson.objectid import ObjectId
+import telegram
+from telegram import Bot
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +32,25 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 AI_SERVER_URL = os.getenv('AI_SERVER_URL')
 RTMP_SERVER_URL = os.getenv('RTMP_SERVER_URL')
+FACE_RECOGNITION_AI_SERVER_URL = os.getenv('FACE_RECOGNITION_AI_SERVER_URL')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_BOT = Bot(token=TELEGRAM_BOT_TOKEN) if TELEGRAM_BOT_TOKEN else None
+
+def send_telegram_notification(receiver, message, image_path=None):
+    if not TELEGRAM_BOT:
+        print('Telegram bot not configured.')
+        return
+    try:
+        # If receiver is username, ensure it starts with @
+        if receiver and not receiver.startswith('@') and not receiver.startswith('+'):
+            receiver = '@' + receiver
+        if image_path:
+            with open(image_path, 'rb') as img:
+                TELEGRAM_BOT.send_photo(chat_id=receiver, photo=img, caption=message)
+        else:
+            TELEGRAM_BOT.send_message(chat_id=receiver, text=message)
+    except Exception as e:
+        print(f'Failed to send Telegram message: {e}')
 
 @app.route('/')
 def index():
@@ -262,6 +283,86 @@ def predict():
             'status': 'error',
             'message': str(e)
         }), 500
+
+@app.route('/find_person', methods=['GET', 'POST'])
+def find_person():
+    if request.method == 'GET':
+        return render_template('missing_person.html')
+    try:
+        person_name = request.form.get('person_name', '').strip()
+        person_image = request.files.get('person_image')
+        telegram_receiver = request.form.get('telegram_receiver', '').strip()
+        if not person_name or not person_image or not telegram_receiver:
+            return jsonify({'status': 'error', 'message': 'Name, image, and Telegram receiver are required.'}), 400
+        filename = secure_filename(f"{uuid.uuid4()}_{person_image.filename}")
+        temp_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        person_image.save(temp_path)
+        cameras = list(mongo.db.cameras.find())
+        results = []
+        found = False
+        found_result = None
+        for cam in cameras:
+            cam_url = cam.get('url')
+            cam_name = cam.get('name', '')
+            if not cam_url:
+                continue
+            frame_url = cam_url.rstrip('/') + '/photo.jpg'
+            try:
+                resp = requests.get(frame_url, timeout=3)
+                if resp.status_code == 200:
+                    frame_filename = f"{uuid.uuid4()}_frame.jpg"
+                    frame_path = os.path.join(app.config['UPLOAD_FOLDER'], frame_filename)
+                    with open(frame_path, 'wb') as f:
+                        f.write(resp.content)
+                    client = Client(FACE_RECOGNITION_AI_SERVER_URL)
+                    result = client.predict(
+                        img1=handle_file(frame_path),
+                        img2=handle_file(temp_path),
+                        api_name="/predict"
+                    )
+                    result_str = str(result)
+                    is_match = result_str.strip().lower().startswith('match found')
+                    similarity = None
+                    import re
+                    match = re.search(r'Similarity(?: Score)?: ([0-9.]+)', result_str)
+                    if match:
+                        similarity = match.group(1)
+                    frame_url_out = None
+                    if is_match:
+                        processed_dir = os.path.join('static', 'processed')
+                        os.makedirs(processed_dir, exist_ok=True)
+                        processed_filename = f"{uuid.uuid4()}_frame.jpg"
+                        processed_path = os.path.join(processed_dir, processed_filename)
+                        import shutil
+                        shutil.copy(frame_path, processed_path)
+                        frame_url_out = url_for('static', filename=f'processed/{processed_filename}')
+                        # Send Telegram notification for match
+                        msg = f"✅ Person '{person_name}' FOUND!\nCamera: {cam_name or cam_url}\nSimilarity Score: {similarity if similarity else '?'}"
+                        send_telegram_notification(telegram_receiver, msg, processed_path)
+                        found = True
+                        found_result = {'camera': cam_url, 'camera_name': cam_name, 'result': result_str, 'is_match': is_match, 'similarity': similarity, 'frame_url': frame_url_out}
+                    results.append({
+                        'camera': cam_url,
+                        'camera_name': cam_name,
+                        'result': result_str,
+                        'is_match': is_match,
+                        'similarity': similarity,
+                        'frame_url': frame_url_out
+                    })
+                    os.remove(frame_path)
+                else:
+                    results.append({'camera': cam_url, 'camera_name': cam_name, 'result': 'Camera offline or no image.', 'is_match': False, 'similarity': None, 'frame_url': None})
+            except Exception as e:
+                results.append({'camera': cam_url, 'camera_name': cam_name, 'result': f'Error: {e}', 'is_match': False, 'similarity': None, 'frame_url': None})
+        os.remove(temp_path)
+        # If no match found, send not found message
+        if not found:
+            msg = f"❌ Sorry, person '{person_name}' was NOT found on any camera. We will keep monitoring."
+            send_telegram_notification(telegram_receiver, msg)
+        return jsonify({'status': 'success', 'results': results})
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'status': 'error', 'message': str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True) 
