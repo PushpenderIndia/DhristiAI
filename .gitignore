@@ -15,4 +15,5 @@ __pycache__
 .env
 uploads/*
 processed/*
+processed/*.jpg
 *.mp4
