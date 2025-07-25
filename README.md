@@ -196,6 +196,8 @@ gcloud compute instances create drishti-ai-vm --project=groovy-camera-466508-a4 
 
 # Create the firewall rule for the RTMP port
 gcloud compute firewall-rules create allow-rtmp-1935 --network=default --allow=tcp:1935 --source-ranges=0.0.0.0/0 --target-tags=rtmp-server
+gcloud compute firewall-rules create allow-app-ports --network=default --allow=tcp:5000,tcp:8080 --source-ranges=0.0.0.0/0 --target-tags=drishti-app
+gcloud compute instances add-tags drishti-ai-vm --tags=drishti-app --zone=asia-south1-a
 
 # Stop the VM
 gcloud compute instances stop drishti-ai-vm --zone=asia-south1-a
@@ -285,11 +287,25 @@ rtmp://<YOUR_VM_IP>:1935/live/<your_stream_key>.
 
 http://<YOUR_VM_IP>:8080/hls/<your_stream_key>.m3u8.
 
+#### Pushing Local video to RTMP Server
+
+```
+ffmpeg -re -i Crowd_Low_Density.mp4 -c:v copy -c:a copy -f flv rtmp://test.antmedia.io/WebRTCAppEE/streamId_qbL1vSg2w
+```
+
+RTMP Test website: https://antmedia.io/webrtc-samples/rtmp-publish-webrtc-play/
+
 #### To Stop Docker
 ```
 cd ~/DhristiAI
 docker-compose down
 ```
+
+## Custom Face Recognition & Drishti AI Server Deployed on HuggingFace
+
+https://huggingface.co/spaces/pushpenderindia/Drishti_AI_Server
+
+https://huggingface.co/spaces/pushpenderindia/deepface
 
 ## License
 
