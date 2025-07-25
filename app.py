@@ -33,7 +33,8 @@ RTMP_SERVER_URL = os.getenv('RTMP_SERVER_URL')
 FACE_RECOGNITION_AI_SERVER_URL = os.getenv('FACE_RECOGNITION_AI_SERVER_URL')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
-TELEGRAM_CHANNEL_ID = -1002876258121
+TELEGRAM_CHANNEL_ID = int(os.getenv('TELEGRAM_CHANNEL_ID'))
+print(f"Telegram channel ID: {TELEGRAM_CHANNEL_ID}")
 
 def send_telegram_message(receiver, message):
     if not TELEGRAM_BOT_TOKEN:

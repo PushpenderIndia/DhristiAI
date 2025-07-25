@@ -16,4 +16,5 @@ __pycache__
 uploads/*
 processed/*
 processed/*.jpg
+static/processed/*
 *.mp4
