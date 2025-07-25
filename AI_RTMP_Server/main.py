@@ -142,7 +142,7 @@ def process_frame_realtime(frame, frame_count):
 @app.websocket("/ws/{stream_key}")
 async def websocket_endpoint(websocket: WebSocket, stream_key: str):
     await websocket.accept()
-    rtmp_url = f"rtmp://localhost:1935/live/{stream_key}"
+    rtmp_url = f"rtmp://nginx-rtmp:1935/live/{stream_key}"
     cap = cv2.VideoCapture(rtmp_url)
     if not cap.isOpened():
         await websocket.close(code=1011)
