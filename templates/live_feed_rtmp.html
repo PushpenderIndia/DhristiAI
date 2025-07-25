@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.fatal) {
                     console.error('Fatal HLS error for stream {{ camera.stream_key }}:', data.type);
                     if(statusEl) {
-                        statusEl.textContent = 'Error';
+                        statusEl.textContent = 'Offline';
                         statusEl.classList.remove('online');
                         statusEl.classList.add('offline');
                     }

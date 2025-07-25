@@ -306,6 +306,17 @@ ffmpeg -re -i Crowd_Low_Density.mp4 -c:v copy -c:a copy -f flv rtmp://34.47.196.
 
 RTMP Test website: https://antmedia.io/webrtc-samples/rtmp-publish-webrtc-play/
 
+#### RTMP Server Validation
+
+Visit this url: `http://SERVER-IP:8080/stats`
+
+```
+e.g. 
+http://34.47.196.138:8080/stats
+```
+
+![](/DemoImages/RTMP_ServerStats.png)
+
 #### To Stop Docker
 ```
 cd ~/DhristiAI
