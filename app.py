@@ -29,6 +29,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Get environment variables
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 AI_SERVER_URL = os.getenv('AI_SERVER_URL')
+RTMP_SERVER_URL = os.getenv('RTMP_SERVER_URL')
 
 @app.route('/')
 def index():
@@ -155,7 +156,7 @@ def add_camera_rtmp():
     else:
         # Generate the URLs based on your NGINX server setup
         # NOTE: Use your server's public IP or domain name, not localhost.
-        server_ip = AI_SERVER_URL #"34.100.129.109" 
+        server_ip = RTMP_SERVER_URL #"34.100.129.109" 
 
         rtmp_push_url = f"rtmp://{server_ip}:1935/live/{stream_key}"
         hls_playback_url = f"http://{server_ip}:8080/hls/{stream_key}.m3u8"

@@ -9,6 +9,7 @@ services:
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - AI_SERVER_URL=${AI_SERVER_URL}
+      - RTMP_SERVER_URL=${RTMP_SERVER_URL}
       - MONGO_URI=${MONGO_URI}
     depends_on:
       - nginx-rtmp
