@@ -293,8 +293,15 @@ http://<YOUR_VM_IP>:8080/hls/<your_stream_key>.m3u8.
 
 #### Pushing Local video to RTMP Server
 
+1. Test Server
 ```
 ffmpeg -re -i Crowd_Low_Density.mp4 -c:v copy -c:a copy -f flv rtmp://test.antmedia.io/WebRTCAppEE/streamId_qbL1vSg2w
+```
+
+2. Our Custom RTMP Server
+
+```
+ffmpeg -re -i Crowd_Low_Density.mp4 -c:v copy -c:a copy -f flv rtmp://34.47.196.138:1935/stream/front-door
 ```
 
 RTMP Test website: https://antmedia.io/webrtc-samples/rtmp-publish-webrtc-play/
