@@ -21,7 +21,7 @@ services:
       - "1935:1935" # RTMP port
       - "8080:80"   # HLS playback port
     volumes:
-      - ./AI_RTMP_Server/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./AI_RTMP_Server/nginx.conf:/etc/nginx/nginx.conf
 
   # FastAPI AI Backend Service
   ai-backend:
