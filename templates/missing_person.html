@@ -47,6 +47,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 if (data.status === 'success') {
                     let html = '';
+                    // Play audio if audio_url is present
+                    if (data.audio_url) {
+                        html += `<audio id="found-audio" src="${data.audio_url}" autoplay style="display:none;"></audio>`;
+                        // Optionally, show a message
+                        html += `<div style="text-align:center; color:#1976d2; font-weight:600; margin-bottom:12px;">Audio notification is playing...</div>`;
+                    }
                     if (data.results && data.results.length > 0) {
                         data.results.forEach(r => {
                             let cardColor = r.is_match ? '#e8f5e9' : (r.result.includes('offline') || r.result.includes('Error') ? '#fff3e0' : '#e3eafc');
@@ -71,6 +77,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         html = '<div class="glass-card" style="padding: 24px; text-align: center; color: #b71c1c; font-size: 1.1em;">No results from any camera.</div>';
                     }
                     resultDiv.innerHTML = html;
+                    // Robust autoplay: programmatically trigger playback
+                    if (data.audio_url) {
+                        setTimeout(() => {
+                            const audio = document.getElementById('found-audio');
+                            if (audio) {
+                                audio.play().catch(e => {
+                                    // Optionally, show a message if playback is blocked
+                                    console.log('Autoplay blocked:', e);
+                                });
+                            }
+                        }, 100);
+                    }
                 } else {
                     resultDiv.innerHTML = `<div class="error">${data.message}</div>`;
                 }

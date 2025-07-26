@@ -11,6 +11,7 @@ import time
 from flask_pymongo import PyMongo 
 from bson.objectid import ObjectId
 from chatbot.routes import chatbot_bp
+from GenerateVoice import GenerateVoice  # Add this import
 
 # Load environment variables
 load_dotenv()
@@ -35,6 +36,7 @@ AI_SERVER_URL = os.getenv('AI_SERVER_URL')
 RTMP_SERVER_URL = os.getenv('RTMP_SERVER_URL')
 FACE_RECOGNITION_AI_SERVER_URL = os.getenv('FACE_RECOGNITION_AI_SERVER_URL')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+ELEVEN_LABS_API = os.environ.get('ELEVEN_LABS_API')
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 TELEGRAM_CHANNEL_ID = int(os.getenv('TELEGRAM_CHANNEL_ID'))
 print(f"Telegram channel ID: {TELEGRAM_CHANNEL_ID}")
@@ -327,6 +329,7 @@ def find_person():
         results = []
         found = False
         found_result = None
+        audio_url = None  # To store the audio file URL if found
         for cam in cameras:
             cam_url = cam.get('url')
             cam_name = cam.get('name', '')
@@ -365,8 +368,20 @@ def find_person():
                         # Send Telegram notification for match
                         msg = f"✅ Person '{person_name}' FOUND!\nCamera: {cam_name or cam_url}\nSimilarity Score: {similarity if similarity else '?'}"
                         send_telegram_notification(TELEGRAM_CHANNEL_ID, msg, processed_path)
+                        voice = GenerateVoice(ELEVEN_LABS_API)
+                        audio_filename = f"{uuid.uuid4()}_found.mp3"
+                        audio_path = os.path.join('static', 'audio', audio_filename)
+                        os.makedirs(os.path.dirname(audio_path), exist_ok=True)
+                        professional_msg = f"Attention: {person_name} has been found at {cam_name or 'an unknown camera'}. Please review the captured snapshot for verification."
+                        try:
+                            voice.convert_text_to_speech(professional_msg, audio_path)
+                            audio_url = url_for('static', filename=f'audio/{audio_filename}')
+                        except Exception as e:
+                            print('Voice generation error:', e)
+                            audio_url = None
+                        # --- End Generate Voice ---
                         found = True
-                        found_result = {'camera': cam_url, 'camera_name': cam_name, 'result': result_str, 'is_match': is_match, 'similarity': similarity, 'frame_url': frame_url_out}
+                        found_result = {'camera': cam_url, 'camera_name': cam_name, 'result': result_str, 'is_match': is_match, 'similarity': similarity, 'frame_url': frame_url_out, 'audio_url': audio_url}
                     results.append({
                         'camera': cam_url,
                         'camera_name': cam_name,
@@ -385,6 +400,9 @@ def find_person():
         if not found:
             msg = f"❌ Sorry, person '{person_name}' was NOT found on any camera. We will keep monitoring."
             send_telegram_notification(TELEGRAM_CHANNEL_ID, msg)
+        # If found, include audio_url in the response
+        if found and found_result:
+            return jsonify({'status': 'success', 'results': results, 'audio_url': found_result.get('audio_url')})
         return jsonify({'status': 'success', 'results': results})
     except Exception as e:
         import traceback; traceback.print_exc()

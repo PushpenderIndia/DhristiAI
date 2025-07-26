@@ -18,3 +18,4 @@ processed/*
 processed/*.jpg
 static/processed/*
 *.mp4
+static/audio/*
