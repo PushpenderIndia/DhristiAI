@@ -10,6 +10,7 @@ import tempfile
 import time
 from flask_pymongo import PyMongo 
 from bson.objectid import ObjectId
+from chatbot.routes import chatbot_bp
 
 # Load environment variables
 load_dotenv()
@@ -25,6 +26,8 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max upload size
 # Ensure the uploads folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
 
 # Get environment variables
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
@@ -331,7 +334,7 @@ def find_person():
                 continue
             frame_url = cam_url.rstrip('/') + '/photo.jpg'
             try:
-                resp = requests.get(frame_url, timeout=3)
+                resp = requests.get(frame_url, timeout=10)
                 if resp.status_code == 200:
                     frame_filename = f"{uuid.uuid4()}_frame.jpg"
                     frame_path = os.path.join(app.config['UPLOAD_FOLDER'], frame_filename)

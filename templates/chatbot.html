@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}DrishtiAI Chatbot{% endblock %}
+{% block content %}
+<div class="glass-card" style="max-width:600px;margin:40px auto;padding:32px;">
+  <div id="chat-container" style="height:400px;overflow:auto;border:1px solid #ccc;padding:12px;"></div>
+  <form id="chat-form" enctype="multipart/form-data">
+    <input type="text" name="name" placeholder="Name (optional for image)" style="width:100%;padding:6px;margin:6px 0;">
+    <input type="file" name="image" accept="image/*" style="margin-bottom:6px;">
+    <textarea name="message" placeholder="Type your message..." rows="2" style="width:100%;padding:6px;"></textarea>
+    <button type="submit" class="btn-primary" style="margin-top:6px;">Send</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const container = document.getElementById('chat-container');
+async function sendTurn() {
+  const form = document.getElementById('chat-form');
+  const fd = new FormData(form);
+  const userText = fd.get('message');
+  appendBubble('user', userText);
+  const resp = await fetch('/chatbot/query', {method:'POST', body:fd});
+  const j = await resp.json();
+  if (j.content) {
+    j.content.parts.forEach(p=>{
+        appendBubble('assistant', p.text);
+    });
+  }
+}
+function appendBubble(role, text) {
+  const d = document.createElement('div');
+  d.textContent = (role==='user'? 'You: ':'Bot: ') + text;
+  d.style.margin = '6px 0';
+  d.style.textAlign = role==='user'? 'right':'left';
+  container.appendChild(d);
+  container.scrollTop = container.scrollHeight;
+}
+document.getElementById('chat-form').onsubmit = e => {
+  e.preventDefault();
+  sendTurn();
+  e.target.reset();
+};
+</script>
+{% endblock %}
