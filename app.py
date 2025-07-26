@@ -372,7 +372,7 @@ def find_person():
                         audio_filename = f"{uuid.uuid4()}_found.mp3"
                         audio_path = os.path.join('static', 'audio', audio_filename)
                         os.makedirs(os.path.dirname(audio_path), exist_ok=True)
-                        professional_msg = f"Attention: {person_name} has been found at {cam_name or 'an unknown camera'}. Please review the captured snapshot for verification."
+                        professional_msg = f"Attention: {person_name} has been found at given camera. Please review the captured snapshot for verification."
                         try:
                             voice.convert_text_to_speech(professional_msg, audio_path)
                             audio_url = url_for('static', filename=f'audio/{audio_filename}')
