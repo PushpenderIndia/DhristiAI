@@ -2,139 +2,230 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 import imutils
+import subprocess
+import time
 from collections import deque
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Load YOLOv8 model (trained to detect humans)
 model = YOLO('yolov8s.pt')
 
-def count_people(input_video, line_position=300, direction='down', threshold_count=30):
-    cap = cv2.VideoCapture(input_video)
-    tracked = {}  # track human centroids by ID
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+TELEGRAM_CHANNEL_ID = int(os.getenv('TELEGRAM_CHANNEL_ID'))
+
+def send_telegram_message(receiver, message):
+    if not TELEGRAM_BOT_TOKEN:
+        print('Telegram bot not configured.')
+        return
+    # Only check .startswith if receiver is a string
+    if isinstance(receiver, str) and not receiver.startswith('@') and not receiver.startswith('+'):
+        receiver = '@' + receiver
+    url = f"{TELEGRAM_API_URL}/sendMessage"
+    data = {
+        "chat_id": receiver,
+        "text": message
+    }
+    try:
+        resp = requests.post(url, data=data)
+        print("Telegram message sent:", resp.text)
+    except Exception as e:
+        print("Telegram send error:", e)
+
+def count_people_live_camera(showCam, input_video, rtmp_url, line_position=300, direction='down', threshold_count=30):
+    """Version for live camera input with proper frame rate control"""
+    send_counter = 0
+    if showCam:
+        cap = cv2.VideoCapture(0)
+        # For live camera, use 30 FPS
+        fps = 30
+    else:
+        cap = cv2.VideoCapture(input_video)
+        # Get the original video's FPS
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        if fps <= 0:  # Fallback if FPS detection fails
+            fps = 30
+    
+    print(f"Using FPS: {fps}")
+    
+    # Set camera properties (only applies to live camera)
+    if showCam:
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        cap.set(cv2.CAP_PROP_FPS, fps)
+    
+    width = 800
+    height = 600
+    
+    # Calculate frame interval for timing control
+    frame_interval = 1.0 / fps
+    
+    # FFmpeg command for RTMP streaming
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-y',
+        '-f', 'rawvideo',
+        '-vcodec', 'rawvideo',
+        '-pix_fmt', 'bgr24',
+        '-s', f'{width}x{height}',
+        '-r', str(fps),  # Use the actual video FPS
+        '-i', '-',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-preset', 'ultrafast',
+        '-tune', 'zerolatency',
+        '-g', str(int(fps * 2)),  # Keyframe interval
+        '-b:v', '2500k',
+        '-maxrate', '2500k',
+        '-bufsize', '5000k',
+        '-f', 'flv',
+        rtmp_url
+    ]
+    
+    ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
+    
+    tracked = {}
     next_id = 0
     total_count = 0
+    
+    # For frame timing
+    last_frame_time = time.time()
+    frame_count = 0
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+    try:
+        while True:
+            start_time = time.time()
+            
+            ret, frame = cap.read()
+            if not ret:
+                print("Failed to grab frame or end of video")
+                break
 
-        frame = imutils.resize(frame, width=800)
-        results = model(frame)[0]
-        centroids = []
+            frame = imutils.resize(frame, width=width)
+            results = model(frame)[0]
+            centroids = []
 
-        for box, cls in zip(results.boxes.xyxy, results.boxes.cls):
-            if int(cls) != 0:
-                continue  # skip non-person classes
-            x1, y1, x2, y2 = map(int, box)
-            cx = (x1 + x2) // 2
-            cy = (y1 + y2) // 2
-            centroids.append((cx, cy))
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            for box, cls in zip(results.boxes.xyxy, results.boxes.cls):
+                if int(cls) != 0:
+                    continue
+                x1, y1, x2, y2 = map(int, box)
+                cx = (x1 + x2) // 2
+                cy = (y1 + y2) // 2
+                centroids.append((cx, cy))
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-        # Simple tracking by association
-        new_tracked = {}
-        for c in centroids:
-            assigned = False
-            for id, (old_c, counted) in tracked.items():
-                if np.linalg.norm(np.array(c) - np.array(old_c)) < 50:
-                    new_tracked[id] = (c, counted)
-                    assigned = True
-                    break
-            if not assigned:
-                new_tracked[next_id] = (c, False)
-                next_id += 1
+            # Tracking and counting logic
+            new_tracked = {}
+            for c in centroids:
+                assigned = False
+                for id, (old_c, counted) in tracked.items():
+                    if np.linalg.norm(np.array(c) - np.array(old_c)) < 50:
+                        new_tracked[id] = (c, counted)
+                        assigned = True
+                        break
+                if not assigned:
+                    new_tracked[next_id] = (c, False)
+                    next_id += 1
 
-        # Counting logic: if centroid crosses line
-        for id, (c, counted) in new_tracked.items():
-            if not counted:
-                if direction == 'down' and c[1] > line_position:
-                    total_count += 1
-                    new_tracked[id] = (c, True)
-                elif direction == 'up' and c[1] < line_position:
-                    total_count += 1
-                    new_tracked[id] = (c, True)
+            for id, (c, counted) in new_tracked.items():
+                if not counted:
+                    if direction == 'down' and c[1] > line_position:
+                        total_count += 1
+                        new_tracked[id] = (c, True)
+                    elif direction == 'up' and c[1] < line_position:
+                        total_count += 1
+                        new_tracked[id] = (c, True)
 
-        tracked = new_tracked
+            tracked = new_tracked
 
-        cv2.line(frame, (0, line_position), (frame.shape[1], line_position), (0, 0, 255), 2)
-        if total_count > threshold_count:
-            # Alert message with background
-            font_scale = 0.7
-            font_thickness = 2
-            alert_text = f'VENUE AT CAPACITY - STOP ADMISSION'
-            count_text = f'Current: {total_count} | Limit: {threshold_count}'
+            # Draw counting line and status
+            cv2.line(frame, (0, line_position), (frame.shape[1], line_position), (0, 0, 255), 2)
             
-            # Calculate text sizes
-            alert_size, _ = cv2.getTextSize(alert_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)
-            count_size, _ = cv2.getTextSize(count_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale * 0.8, font_thickness)
+            # Add status text with better formatting
+            if total_count > threshold_count:
+                # Alert status
+                status_text = f'CAPACITY REACHED: {total_count}/{threshold_count}'
+                text_color = (0, 0, 255)  # Red
+                bg_color = (0, 0, 0)  # Black background
+                
+                # Calculate text size and position
+                font_scale = 0.8
+                thickness = 2
+                text_size = cv2.getTextSize(status_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)[0]
+                
+                # Draw background rectangle
+                cv2.rectangle(frame, (5, 5), (text_size[0] + 15, text_size[1] + 15), bg_color, -1)
+                cv2.putText(frame, status_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, thickness)
+                if send_counter < 1:
+                    send_telegram_message(TELEGRAM_CHANNEL_ID, "⚠️" + status_text + "\n\nClose the venue gate immediately")
+                    send_counter += 1
+            else:
+                # Normal status
+                status_text = f'Count: {total_count}/{threshold_count}'
+                text_color = (0, 255, 0)  # Green
+                bg_color = (0, 0, 0)  # Black background
+                
+                # Calculate text size and position
+                font_scale = 0.8
+                thickness = 2
+                text_size = cv2.getTextSize(status_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)[0]
+                
+                # Draw background rectangle
+                cv2.rectangle(frame, (5, 5), (text_size[0] + 15, text_size[1] + 15), bg_color, -1)
+                cv2.putText(frame, status_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, thickness)
             
-            # Position text in center
-            alert_x = (frame.shape[1] - alert_size[0]) // 2
-            alert_y = (frame.shape[0] + alert_size[1]) // 2 - 20
-            count_x = (frame.shape[1] - count_size[0]) // 2
-            count_y = alert_y + alert_size[1] + 10
+            # Add FPS counter for debugging
+            current_time = time.time()
+            if current_time - last_frame_time >= 1.0:
+                actual_fps = frame_count / (current_time - last_frame_time)
+                last_frame_time = current_time
+                frame_count = 0
+                print(f"Processing FPS: {actual_fps:.1f}, Target FPS: {fps}")
+            frame_count += 1
             
-            # Draw background rectangles
-            padding = 10
-            alert_bg_rect = [
-                (alert_x - padding, alert_y - alert_size[1] - padding),
-                (alert_x + alert_size[0] + padding, alert_y + padding)
-            ]
-            count_bg_rect = [
-                (count_x - padding, count_y - count_size[1] - padding),
-                (count_x + count_size[0] + padding, count_y + padding)
-            ]
+            # Write to RTMP stream
+            try:
+                ffmpeg_process.stdin.write(frame.tobytes())
+                ffmpeg_process.stdin.flush()  # Ensure data is sent immediately
+            except BrokenPipeError:
+                print("FFmpeg process terminated")
+                break
             
-            # Draw backgrounds
-            cv2.rectangle(frame, alert_bg_rect[0], alert_bg_rect[1], (0, 0, 0), -1)  # Black background
-            cv2.rectangle(frame, count_bg_rect[0], count_bg_rect[1], (0, 0, 0), -1)  # Black background
+            # Optional local display
+            cv2.imshow('AI Gate Entrance Guard', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
             
-            # Draw text
-            cv2.putText(frame, alert_text, (alert_x, alert_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 255), font_thickness)
-            cv2.putText(frame, count_text, (count_x, count_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale * 0.8, (255, 255, 255), font_thickness)
-        else:
-            # Normal count display with background
-            font_scale = 0.8
-            font_thickness = 2
-            status_text = f'VENUE STATUS: OPEN'
-            count_text = f'Current Count: {total_count} / {threshold_count}'
+            # Frame rate control - this is the key fix!
+            processing_time = time.time() - start_time
+            sleep_time = frame_interval - processing_time
             
-            # Calculate text sizes
-            status_size, _ = cv2.getTextSize(status_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)
-            count_size, _ = cv2.getTextSize(count_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale * 0.9, font_thickness)
-            
-            # Position text
-            status_x = 10
-            status_y = 40
-            count_x = 10
-            count_y = status_y + status_size[1] + 10
-            
-            # Draw background rectangles
-            padding = 8
-            status_bg_rect = [
-                (status_x - padding, status_y - status_size[1] - padding),
-                (status_x + status_size[0] + padding, status_y + padding)
-            ]
-            count_bg_rect = [
-                (count_x - padding, count_y - count_size[1] - padding),
-                (count_x + count_size[0] + padding, count_y + padding)
-            ]
-            
-            # Draw backgrounds
-            cv2.rectangle(frame, status_bg_rect[0], status_bg_rect[1], (0, 0, 0), -1)  # Black background
-            cv2.rectangle(frame, count_bg_rect[0], count_bg_rect[1], (0, 0, 0), -1)  # Black background
-            
-            # Draw text
-            cv2.putText(frame, status_text, (status_x, status_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), font_thickness)
-            cv2.putText(frame, count_text, (count_x, count_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale * 0.9, (255, 255, 255), font_thickness)
-        cv2.imshow('People Counter', frame)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+            elif not showCam:  # Only warn for video files, not live camera
+                print(f"Warning: Processing too slow! Target: {frame_interval:.3f}s, Actual: {processing_time:.3f}s")
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-    print('Final count:', total_count)
+    except KeyboardInterrupt:
+        print("Live streaming interrupted")
+    
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+        if ffmpeg_process.poll() is None:
+            ffmpeg_process.stdin.close()
+            ffmpeg_process.terminate()
+            ffmpeg_process.wait()
+        
+        print(f"Final count: {total_count}")
 
 if __name__ == '__main__':
-    count_people('/Users/pushpendersingh/Documents/Hackathons/DhristiAI/DemoVideos/Crowd_Low_Density.mp4')
+    # Configuration
+    showCam = False  # Set to True for live camera, False for video file
+    rtmp_url = 'rtmp://test.antmedia.io/WebRTCAppEE/streamId_zA44avZub'
+    video_path = 'DemoVideos/Crowd_Low_Density.mp4'
+    
+    count_people_live_camera(showCam, video_path, rtmp_url)
