@@ -33,6 +33,7 @@
     {% endwith %}
     <form action="{{ url_for('add_camera') }}" method="POST" class="camera-form">
         <input type="text" id="camera-url" name="camera_url" placeholder="http://192.168.1.10:8080" class="form-control" required>
+        <input type="text" id="zone-name" name="zone_name" placeholder="Zone Name (e.g. Entrance, Lobby, Parking)" class="form-control" required>
         <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Add Camera</button>
     </form>
     <div class="description">

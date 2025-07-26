@@ -163,9 +163,13 @@ def upload_video():
 @app.route('/add_camera', methods=['POST'])
 def add_camera():
     camera_url = request.form.get('camera_url').strip()
+    zone_name = request.form.get('zone_name', '').strip()
 
     if not camera_url:
         flash('Camera URL cannot be empty.', 'error')
+        return redirect(url_for('live_feed'))
+    if not zone_name:
+        flash('Zone Name cannot be empty.', 'error')
         return redirect(url_for('live_feed'))
 
     # Ensure URL has http:// prefix
@@ -186,6 +190,7 @@ def add_camera():
     else:
         mongo.db.cameras.insert_one({
             'url': camera_url,
+            'zone_name': zone_name,
             'dateAdded': time.time()
         })
         flash('Camera added successfully!', 'success')
@@ -335,6 +340,7 @@ def find_person():
         for cam in cameras:
             cam_url = cam.get('url')
             cam_name = cam.get('name', '')
+            zone_name = cam.get('zone_name', '')
             if not cam_url:
                 continue
             frame_url = cam_url.rstrip('/') + '/photo.jpg'
@@ -371,7 +377,8 @@ def find_person():
                         msg = f"✅ Person '{person_name}' FOUND!\nCamera: {cam_name or cam_url}\nSimilarity Score: {similarity if similarity else '?'}"
                         send_telegram_notification(TELEGRAM_CHANNEL_ID, msg, processed_path)
                         # Translate the announcement message
-                        english_msg = f"Attention: {person_name} has been found at given camera. Please review the captured snapshot for verification."
+                        zone_text = f" in {zone_name} zone" if zone_name else ""
+                        english_msg = f"Attention: {person_name} has been found in {zone_text} camera. Please review the captured snapshot for verification."
                         try:
                             translator = EasyGoogleTranslate(
                                 source_language="en",
