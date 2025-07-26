@@ -225,6 +225,7 @@ def count_people_live_camera(showCam, input_video, rtmp_url, line_position=300, 
 if __name__ == '__main__':
     # Configuration
     showCam = False  # Set to True for live camera, False for video file
+    showCam = True  # Set to True for live camera, False for video file
     rtmp_url = 'rtmp://test.antmedia.io/WebRTCAppEE/streamId_zA44avZub'
     video_path = 'DemoVideos/Crowd_Low_Density.mp4'
     
