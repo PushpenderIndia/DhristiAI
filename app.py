@@ -11,7 +11,8 @@ import time
 from flask_pymongo import PyMongo 
 from bson.objectid import ObjectId
 from chatbot.routes import chatbot_bp
-from GenerateVoice import GenerateVoice  # Add this import
+from GenerateVoice import GenerateVoice  
+from easygoogletranslate import EasyGoogleTranslate
 
 # Load environment variables
 load_dotenv()
@@ -320,6 +321,7 @@ def find_person():
     try:
         person_name = request.form.get('person_name', '').strip()
         person_image = request.files.get('person_image')
+        announcement_language = request.form.get('announcement_language', 'en').strip()
         if not person_name or not person_image:
             return jsonify({'status': 'error', 'message': 'Name and image are required.'}), 400
         filename = secure_filename(f"{uuid.uuid4()}_{person_image.filename}")
@@ -368,13 +370,25 @@ def find_person():
                         # Send Telegram notification for match
                         msg = f"✅ Person '{person_name}' FOUND!\nCamera: {cam_name or cam_url}\nSimilarity Score: {similarity if similarity else '?'}"
                         send_telegram_notification(TELEGRAM_CHANNEL_ID, msg, processed_path)
+                        # Translate the announcement message
+                        english_msg = f"Attention: {person_name} has been found at given camera. Please review the captured snapshot for verification."
+                        try:
+                            translator = EasyGoogleTranslate(
+                                source_language="en",
+                                target_language=announcement_language,
+                                timeout=10
+                            )
+                            translated_msg = translator.translate(english_msg)
+                        except Exception as e:
+                            print(f'Translation error: {e}')
+                            translated_msg = english_msg  # Fallback to English
+                        
                         voice = GenerateVoice(ELEVEN_LABS_API)
                         audio_filename = f"{uuid.uuid4()}_found.mp3"
                         audio_path = os.path.join('static', 'audio', audio_filename)
                         os.makedirs(os.path.dirname(audio_path), exist_ok=True)
-                        professional_msg = f"Attention: {person_name} has been found at given camera. Please review the captured snapshot for verification."
                         try:
-                            voice.convert_text_to_speech(professional_msg, audio_path)
+                            voice.convert_text_to_speech(translated_msg, audio_path)
                             audio_url = url_for('static', filename=f'audio/{audio_filename}')
                         except Exception as e:
                             print('Voice generation error:', e)
