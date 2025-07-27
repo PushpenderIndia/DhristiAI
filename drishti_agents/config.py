@@ -16,8 +16,8 @@ GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 
 # Model Configuration  
 # Using gemini-1.5-flash for higher rate limits on free tier
-DEFAULT_MODEL = "gemini-1.5-flash"
-BACKUP_MODEL = "gemini-1.5-flash"
+DEFAULT_MODEL = "gemini-2.5-flash"
+BACKUP_MODEL = "gemini-2.5-flash"
 
 # Agent Configuration
 MAX_RETRY_ATTEMPTS = 3
