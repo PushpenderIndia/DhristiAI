@@ -6,7 +6,7 @@
 
 - Click on this below image for playing video
 
-[![IMAGE_ALT](https://img.youtube.com/vi/AlFcAmmxvOk/0.jpg)](https://youtu.be/AlFcAmmxvOk)
+[![IMAGE_ALT](https://img.youtube.com/vi/YK6EdChkZa0/0.jpg)](https://youtu.be/YK6EdChkZa0)
 
 ### 🚧 Problem Statement:
 
