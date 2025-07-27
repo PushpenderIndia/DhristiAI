@@ -63,3 +63,6 @@ google-generativeai
 requests
 python-dotenv
 wikipedia
+googlemaps
+osmnx
+folium
