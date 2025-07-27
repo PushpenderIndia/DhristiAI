@@ -86,6 +86,13 @@ def send_telegram_notification(receiver, message, image_path=None):
 def index():
     return render_template('index.html')
 
+@app.route('/predict_stampede')
+def predict_stampede():    
+    # Redirect to the ADK web interface with DrishtiAI agents
+    adk_url = "http://127.0.0.1:8000/dev-ui/?app=drishti_agents"
+    
+    return redirect(adk_url) 
+
 @app.route('/dashboard')
 def dashboard():
     try:
